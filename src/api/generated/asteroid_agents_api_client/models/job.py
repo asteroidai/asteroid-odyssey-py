@@ -14,24 +14,19 @@ T = TypeVar("T", bound="Job")
 class Job:
     """
     Attributes:
-        id (str): The unique identifier for the job
         data (JobData): Freeform JSON object containing job data
     """
 
-    id: str
     data: "JobData"
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
-        id = self.id
-
         data = self.data.to_dict()
 
         field_dict: Dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
             {
-                "id": id,
                 "data": data,
             }
         )
@@ -43,12 +38,9 @@ class Job:
         from ..models.job_data import JobData
 
         d = src_dict.copy()
-        id = d.pop("id")
-
         data = JobData.from_dict(d.pop("data"))
 
         job = cls(
-            id=id,
             data=data,
         )
 

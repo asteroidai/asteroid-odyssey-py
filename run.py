@@ -1,9 +1,13 @@
 import os
-from asteroid_odyssey import AsteroidClient
+from asteroid_odyssey import Odyssey
 
-client = AsteroidClient(
+odyssey = Odyssey(
     api_key=os.getenv("ASTEROID_API_KEY"),
 )
 
 # Use the client
-client.run("Find the new OpenAI operator blog post")
+odyssey.start("Find the new OpenAI operator blog post")
+
+
+
+
