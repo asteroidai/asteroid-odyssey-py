@@ -31,6 +31,7 @@ def _get_kwargs(
 
 
 def _parse_response(*, client: Union[AuthenticatedClient, Client], response: httpx.Response) -> Optional[str]:
+    print(f"Response: {response}")
     if response.status_code == 202:
         response_202 = cast(str, response.json())
         return response_202
