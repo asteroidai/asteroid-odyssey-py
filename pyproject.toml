@@ -2,20 +2,13 @@
 requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools]
-package-dir = {"" = "src"}
-packages = { find = { where = ["src"], exclude = ["tests*", "logs*"] } }
-
-# Include package data
-include-package-data = true
-
 [project]
-name = "asteroid_odyssey"
-description = "A Python SDK for interacting with the Asteroid Agents API"
+name = "asteroid-odyssey"
+version = "0.1.1"
 authors = [
-    { name = "Asteroid", email = "founders@asteroid.ai" }
+  { name = "David Mlcoch", email = "founders@asteroid.com" },
 ]
-version = "0.1.20"
+description = "A Python SDK for browser automation using Asteroid platform."
 readme = "README.md"
 requires-python = ">=3.8"
 dependencies = [
@@ -29,5 +22,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 
-[project.entry-points.inspect_ai]
-asteroid_sdk = "asteroid_sdk.supervision.inspect_ai._registry"
+[tool.setuptools]
+package-dir = {"" = "src"}
+packages = { find = { where = ["src"], exclude = ["tests*", "logs*"] } }
+
