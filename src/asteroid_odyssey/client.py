@@ -47,7 +47,7 @@ class Odyssey:
             if not from_env:
                 # Fall back to the production server
                 # TODO replace with the URL
-                from_env = "http://34.173.109.7/api/v1"
+                from_env = "https://odyssey.asteroid.ai/api/v1"
             agents_base_url = from_env
 
         if platform_base_url is None:
@@ -87,27 +87,36 @@ class Odyssey:
 
         return response
 
-    def start(self, task: str, agent_name: str = "default_web"):
-        """Example method using the API client."""
-        logger.info(f"Running task: {task}")
+    def start(self, job_data: dict, agent_name: str = "default_web"):
+        """Start a new job with the specified data.
+        
+        Args:
+            job_data: Dictionary containing the job data (must include 'task' key)
+            agent_name: Name of the agent to run the job (default: 'default_web')
+            
+        Returns:
+            API response from running the job
+            
+        Raises:
+            ApiError: If no task is specified or if there's no response from the API
+        """
+        if 'task' not in job_data:
+            raise ApiError("Job data must include 'task' key")
 
-        job_data = {
-            "task": task
-        }
-
-        jd = JobData.from_dict(job_data)
+        logger.info(f"Running job with data: {job_data}")
 
         try:
             response = run_agent_sync(
                 agent_name=agent_name,
                 client=self._agents_client,
                 body=Job(
-                    data=jd
+                    
+                    data=JobData.from_dict(job_data)
                 )
             )
             logger.info(f"Response: {response}")
         except Exception as e:
-            logger.error(f"Error running task: {e}")
+            logger.error(f"Error running job: {e}")
             raise e
 
         if response is None:
