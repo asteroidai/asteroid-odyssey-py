@@ -1,14 +1,21 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+packages = { find = { where = ["src"], exclude = ["tests*", "logs*"] } }
+
+# Include package data
+include-package-data = true
 
 [project]
-name = "asteroid-odyssey"
-version = "0.1.0"
+name = "asteroid_odyssey"
+description = "A Python SDK for interacting with the Asteroid Agents API"
 authors = [
-  { name = "Your Name", email = "your.email@example.com" },
+    { name = "Asteroid", email = "founders@asteroid.ai" }
 ]
-description = "A Python SDK for space exploration simulations"
+version = "0.1.19"
 readme = "README.md"
 requires-python = ">=3.8"
 dependencies = [
@@ -22,5 +29,5 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 
-[tool.hatch.build]
-packages = ["src/asteroid_odyssey", "src/api"]
+[project.entry-points.inspect_ai]
+asteroid_sdk = "asteroid_sdk.supervision.inspect_ai._registry"
