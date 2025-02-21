@@ -3,26 +3,26 @@ import os
 from typing import Optional, List, Dict, Any
 from uuid import UUID
 
-from api.generated.agents.asteroid_agents_api_client.api.agent.get_agents import sync as get_agents_sync
-from api.generated.agents.asteroid_agents_api_client.api.api.get_open_api import sync_detailed as get_open_api_sync
-from api.generated.agents.asteroid_agents_api_client.api.default.create_workflow import sync as create_workflow_sync
-from api.generated.agents.asteroid_agents_api_client.api.default.health_check import sync as health_check_sync
-from api.generated.agents.asteroid_agents_api_client.api.workflow.execute_workflow import sync as execute_workflow_sync
-from api.generated.agents.asteroid_agents_api_client.api.workflow.get_workflow_executions import \
+from asteroid_odyssey.api.generated.agents.asteroid_agents_api_client.api.agent.get_agents import sync as get_agents_sync
+from asteroid_odyssey.api.generated.agents.asteroid_agents_api_client.api.api.get_open_api import sync_detailed as get_open_api_sync
+from asteroid_odyssey.api.generated.agents.asteroid_agents_api_client.api.default.create_workflow import sync as create_workflow_sync
+from asteroid_odyssey.api.generated.agents.asteroid_agents_api_client.api.default.health_check import sync as health_check_sync
+from asteroid_odyssey.api.generated.agents.asteroid_agents_api_client.api.workflow.execute_workflow import sync as execute_workflow_sync
+from asteroid_odyssey.api.generated.agents.asteroid_agents_api_client.api.workflow.get_workflow_executions import \
     sync as get_workflow_executions_sync
-from api.generated.agents.asteroid_agents_api_client.client import Client as AgentsClient
-from api.generated.agents.asteroid_agents_api_client.models import CreateWorkflowRequest, WorkflowExecutionRequest, \
+from asteroid_odyssey.api.generated.agents.asteroid_agents_api_client.client import Client as AgentsClient
+from asteroid_odyssey.api.generated.agents.asteroid_agents_api_client.models import CreateWorkflowRequest, WorkflowExecutionRequest, \
     WorkflowExecution
-from api.generated.platform.asteroid_api_client.api.api_key.validate_api_key import \
+from asteroid_odyssey.api.generated.platform.asteroid_api_client.api.api_key.validate_api_key import \
     sync_detailed as validate_api_key_sync
-from api.generated.platform.asteroid_api_client.api.improve.create_feedback import sync_detailed as create_feedback_sync
-from api.generated.platform.asteroid_api_client.api.run.get_run import sync as get_run_sync
-from api.generated.platform.asteroid_api_client.api.run.get_run_status import sync as get_run_status_sync
-from api.generated.platform.asteroid_api_client.client import Client as PlatformClient
-from api.generated.platform.asteroid_api_client.models import Status
-from api.generated.platform.asteroid_api_client.models.error_response import ErrorResponse
-from api.generated.platform.asteroid_api_client.models.feedback import Feedback
-from api.generated.platform.asteroid_api_client.models.feedback_request import FeedbackRequest
+from asteroid_odyssey.api.generated.platform.asteroid_api_client.api.improve.create_feedback import sync_detailed as create_feedback_sync
+from asteroid_odyssey.api.generated.platform.asteroid_api_client.api.run.get_run import sync as get_run_sync
+from asteroid_odyssey.api.generated.platform.asteroid_api_client.api.run.get_run_status import sync as get_run_status_sync
+from asteroid_odyssey.api.generated.platform.asteroid_api_client.client import Client as PlatformClient
+from asteroid_odyssey.api.generated.platform.asteroid_api_client.models import Status
+from asteroid_odyssey.api.generated.platform.asteroid_api_client.models.error_response import ErrorResponse
+from asteroid_odyssey.api.generated.platform.asteroid_api_client.models.feedback import Feedback
+from asteroid_odyssey.api.generated.platform.asteroid_api_client.models.feedback_request import FeedbackRequest
 from asteroid_odyssey.exceptions import ApiError
 
 # Logger

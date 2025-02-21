@@ -15,7 +15,7 @@ description = "A Python SDK for interacting with the Asteroid Agents API"
 authors = [
     { name = "Asteroid", email = "founders@asteroid.ai" }
 ]
-version = "0.1.19"
+version = "0.1.20"
 readme = "README.md"
 requires-python = ">=3.8"
 dependencies = [
