@@ -4,11 +4,11 @@ build-backend = "hatchling.build"
 
 [project]
 name = "asteroid-odyssey"
-version = "0.1.0"
+version = "0.1.3"
 authors = [
-  { name = "Your Name", email = "your.email@example.com" },
+  { name = "Asteroid Founders", email = "founders@asteroid.ai" },
 ]
-description = "A Python SDK for space exploration simulations"
+description = "A Python SDK for interacting with the Asteroid Agents API"
 readme = "README.md"
 requires-python = ">=3.8"
 dependencies = [
