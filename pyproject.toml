@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "asteroid-odyssey"
-version = "0.1.11"
+version = "0.1.12"
 authors = [
   { name = "Asteroid Founders", email = "founders@asteroid.ai" },
 ]
@@ -23,4 +23,4 @@ classifiers = [
 ]
 
 [tool.hatch.build]
-packages = { find = { where = ["src"], exclude = ["tests*", "logs*"] } }
+packages = ["src"]
