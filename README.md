@@ -1,6 +1,6 @@
 # Asteroid Odyssey
 
-A Python SDK for exploring the far reaches of the known web.
+The official Python SDK for interacting with the Asteroid Agents API.
 
 ## Installation
 
@@ -10,22 +10,8 @@ pip install asteroid-odyssey
 
 ## Usage
 
-```python
-from asteroid_odyssey import Odyssey
+Please head to our documentation at https://docs.asteroid.ai/sdk/python
 
-odyssey = Odyssey()
-odyssey.run_workflow()
-```
+## License
 
-## Regenerate the client
-
-Assuming your structure is like this:
-```
-asteroid-odyssey/<you are here>
-agents/server/api/openapi.yaml
-```
-
-```bash
-openapi-python-client generate --path ../agents/server/api/openapi.yaml --output-path src/api/generated/agents --overwrite
-openapi-python-client generate --path ../platform/server/openapi.yaml --output-path src/api/generated/platform --overwrite
-```
+The Asteroid Odyssey SDK is available under the MIT License.
