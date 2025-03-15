@@ -18,20 +18,23 @@ import re  # noqa: F401
 import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictStr
-from typing import Any, ClassVar, Dict, List
+from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
 
-class Agent(BaseModel):
+class BrowserSession(BaseModel):
     """
-    Agent
+    BrowserSession
     """ # noqa: E501
-    name: StrictStr = Field(description="The name of the agent")
-    description: StrictStr = Field(description="The description of the agent")
-    visibility: StrictStr = Field(description="The visibility of the agent")
-    required_fields: List[StrictStr] = Field(description="The required fields for the agent")
-    required_prompts: List[StrictStr] = Field(description="The prompts for the agent")
-    __properties: ClassVar[List[str]] = ["name", "description", "visibility", "required_fields", "required_prompts"]
+    id: Optional[StrictStr] = Field(default=None, description="Browser session identifier.")
+    browser_name: Optional[StrictStr] = Field(default=None, description="Browser name (Anchor, Browserbase, etc.)")
+    execution_id: Optional[StrictStr] = Field(default=None, description="Execution ID.")
+    cdp_url: Optional[StrictStr] = Field(default=None, description="CDP URL.")
+    debugger_url: Optional[StrictStr] = Field(default=None, description="Debugger URL.")
+    session_id: Optional[StrictStr] = Field(default=None, description="Session ID.")
+    session_url: Optional[StrictStr] = Field(default=None, description="Session URL.")
+    recording_url: Optional[StrictStr] = Field(default=None, description="Recording URL.")
+    __properties: ClassVar[List[str]] = ["id", "browser_name", "execution_id", "cdp_url", "debugger_url", "session_id", "session_url", "recording_url"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -51,7 +54,7 @@ class Agent(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of Agent from a JSON string"""
+        """Create an instance of BrowserSession from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -76,7 +79,7 @@ class Agent(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of Agent from a dict"""
+        """Create an instance of BrowserSession from a dict"""
         if obj is None:
             return None
 
@@ -84,11 +87,14 @@ class Agent(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "name": obj.get("name"),
-            "description": obj.get("description"),
-            "visibility": obj.get("visibility"),
-            "required_fields": obj.get("required_fields"),
-            "required_prompts": obj.get("required_prompts")
+            "id": obj.get("id"),
+            "browser_name": obj.get("browser_name"),
+            "execution_id": obj.get("execution_id"),
+            "cdp_url": obj.get("cdp_url"),
+            "debugger_url": obj.get("debugger_url"),
+            "session_id": obj.get("session_id"),
+            "session_url": obj.get("session_url"),
+            "recording_url": obj.get("recording_url")
         })
         return _obj
 

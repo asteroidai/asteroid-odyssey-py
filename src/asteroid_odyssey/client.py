@@ -1,173 +1,348 @@
-import logging
-import os
-from typing import Optional, List, Dict, Any
+from typing import Optional, Dict, Any, List, Union, Callable, Tuple
 from uuid import UUID
+import logging
+import time
+from enum import Enum
+import os
 
-from asteroid_odyssey.api.generated.agents.asteroid_agents_api_client.api.agent.get_agents import sync as get_agents_sync
-from asteroid_odyssey.api.generated.agents.asteroid_agents_api_client.api.api.get_open_api import sync_detailed as get_open_api_sync
-from asteroid_odyssey.api.generated.agents.asteroid_agents_api_client.api.default.create_workflow import sync as create_workflow_sync
-from asteroid_odyssey.api.generated.agents.asteroid_agents_api_client.api.default.health_check import sync as health_check_sync
-from asteroid_odyssey.api.generated.agents.asteroid_agents_api_client.api.workflow.execute_workflow import sync as execute_workflow_sync
-from asteroid_odyssey.api.generated.agents.asteroid_agents_api_client.api.workflow.get_workflow_executions import \
-    sync as get_workflow_executions_sync
-from asteroid_odyssey.api.generated.agents.asteroid_agents_api_client.client import Client as AgentsClient
-from asteroid_odyssey.api.generated.agents.asteroid_agents_api_client.models import CreateWorkflowRequest, WorkflowExecutionRequest, \
-    WorkflowExecution
-from asteroid_odyssey.api.generated.platform.asteroid_api_client.api.api_key.validate_api_key import \
-    sync_detailed as validate_api_key_sync
-from asteroid_odyssey.api.generated.platform.asteroid_api_client.api.improve.create_feedback import sync_detailed as create_feedback_sync
-from asteroid_odyssey.api.generated.platform.asteroid_api_client.api.run.get_run import sync as get_run_sync
-from asteroid_odyssey.api.generated.platform.asteroid_api_client.api.run.get_run_status import sync as get_run_status_sync
-from asteroid_odyssey.api.generated.platform.asteroid_api_client.client import Client as PlatformClient
-from asteroid_odyssey.api.generated.platform.asteroid_api_client.models import Status
-from asteroid_odyssey.api.generated.platform.asteroid_api_client.models.error_response import ErrorResponse
-from asteroid_odyssey.api.generated.platform.asteroid_api_client.models.feedback import Feedback
-from asteroid_odyssey.api.generated.platform.asteroid_api_client.models.feedback_request import FeedbackRequest
-from asteroid_odyssey.exceptions import ApiError
+from .api.generated.agents.asteroid_agents_api_client.models import (
+    CreateWorkflowRequest,
+    WorkflowExecution,
+    ExecutionStatus,
+    Execution
+)
+from .api.generated.agents.asteroid_agents_api_client.api_client import ApiClient
+from .api.generated.agents.asteroid_agents_api_client.configuration import Configuration
+from .api.generated.agents.asteroid_agents_api_client.api.execution_api import ExecutionApi
+from .api.generated.agents.asteroid_agents_api_client.api.agent_api import AgentApi
+from .api.generated.agents.asteroid_agents_api_client.api.default_api import DefaultApi
+from .api.generated.agents.asteroid_agents_api_client.api.workflow_api import WorkflowApi
 
-# Logger
 logger = logging.getLogger(__name__)
 
+class ExecutionTerminalState(Enum):
+    """Terminal states for an execution"""
+    COMPLETED = "completed"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+    ERROR = "error"
 
-class Odyssey:
-    """Wrapper for the generated API client."""
+agent_name = "iris"
 
+class ExecutionResult:
+    """Wrapper class for execution results"""
+    def __init__(self, execution: Execution):
+        self.execution_id = execution.id
+        self.status = execution.status
+        self.result = execution.result
+        self.error = execution.error if hasattr(execution, 'error') else None
+        self.created_at = execution.created_at
+        self.completed_at = execution.completed_at if hasattr(execution, 'completed_at') else None
+
+class AsteroidClient:
+    """
+    A high-level client for interacting with the Asteroid API.
+    """
     def __init__(
-            self,
-            api_key: Optional[str] = None,
-            agents_base_url: Optional[str] = None,
-            platform_base_url: Optional[str] = None
+        self,
+        api_key: Optional[str] = None,
+        base_url: Optional[str] = None,
+        verify_ssl: bool = True
     ):
-        """Initialize the client.
+        """
+        Initialize the Asteroid client.
 
         Args:
-            api_key: Optional API key for authentication
-            agents_base_url: Base URL for the agents API
-            platform_base_url: Base URL for the platform API
+            api_key: API key for authentication. If not provided, will look for ASTEROID_API_KEY env var
+            base_url: Base URL for the API. Defaults to production URL if not specified
+            verify_ssl: Whether to verify SSL certificates. Defaults to True
         """
-        if api_key is None:
-            api_key = os.getenv("ASTEROID_API_KEY")
-            if not api_key:
-                raise ApiError(
-                    "Asteroid API key is required, please set the ASTEROID_API_KEY environment variable. You can get one from https://platform.asteroid.com/")
+        self.api_key = api_key or os.getenv("ASTEROID_API_KEY")
+        if not self.api_key:
+            raise ValueError(
+                "API key is required. Either pass it directly or set ASTEROID_API_KEY environment variable"
+            )
 
-        if agents_base_url is None:
-            from_env = os.getenv("ASTEROID_AGENTS_API_URL")
-            if not from_env:
-                from_env = "https://odyssey.asteroid.ai/api/v1"
-            agents_base_url = from_env
-
-        if platform_base_url is None:
-            from_env = os.getenv("ASTEROID_API_URL")
-            if not from_env:
-                from_env = "https://platform.asteroid.com/api/v1"
-            platform_base_url = from_env
-
-        self._agents_client = AgentsClient(
-            base_url=agents_base_url,
-            verify_ssl=False,
-            headers={"X-Asteroid-Agents-Api-Key": f"{api_key}"}
+        self.base_url = base_url or "https://api.asteroid.ai/v1"
+        
+        # Initialize configuration
+        self.config = Configuration(
+            host=self.base_url,
+            api_key={"ApiKeyAuth": self.api_key},
+            verify_ssl=verify_ssl
         )
-
-        self._platform_client = PlatformClient(
-            base_url=platform_base_url,
-            verify_ssl=False,
-            headers={"X-Asteroid-Api-Key": f"{api_key}"}
-        )
-
-        print(f"Validating API key")
-        try:
-            response = validate_api_key_sync(client=self._platform_client)
-            print(f"Response: {response}")
-        except Exception as e:
-            print(f"Error validating API key: {e}")
-            raise e
+        
+        # Initialize API client
+        self.client = ApiClient(configuration=self.config)
 
     def get_agents(self) -> List[Dict[str, Any]]:
-        """Retrieves a list of all agents."""
+        """
+        Get list of available agents.
+        
+        Returns:
+            List of agent details
+        """
         try:
-            response = get_agents_sync(client=self._agents_client)
-            return response
+            return AgentApi(self.client).get_agents()
         except Exception as e:
-            logger.error(f"Error retrieving agents: {e}")
-            raise e
+            logger.error(f"Failed to get agents: {str(e)}")
+            raise
 
-    def create_workflow(self, agent_name: str, request: CreateWorkflowRequest) -> str:
-        """Creates a new workflow for a given agent."""
-        try:
-            workflow_id = create_workflow_sync(client=self._agents_client, agent_name=agent_name, body=request)
-            return workflow_id
-        except Exception as e:
-            logger.error(f"Error creating workflow: {e}")
-            raise e
+    def create_workflow(
+        self, 
+        workflow_name: str,
+        start_url: str,
+        prompt: str
+    ) -> str:
+        """
+        Create a new workflow for an agent.
 
-    def run_workflow(self, workflow_id: UUID, request: WorkflowExecutionRequest) -> str:
-        """Executes a saved workflow for an agent."""
-        try:
-            response = execute_workflow_sync(client=self._agents_client, workflow_id=workflow_id, body=request)
-            return response
-        except Exception as e:
-            logger.error(f"Error running workflow: {e}")
-            raise e
+        Args:
+            agent_name: Name of the agent to create workflow for
+            workflow_config: Configuration for the workflow
 
-    def get_workflow_runs(self) -> list[WorkflowExecution] | None:
-        """Retrieves all workflows along with their executions."""
-        try:
-            response = get_workflow_executions_sync(client=self._agents_client)
-            return response
-        except Exception as e:
-            logger.error(f"Error retrieving workflow runs: {e}")
-            raise e
+        Returns:
+            Workflow ID
+        """
+        result_schema = {
+            "properties": {
+                "explanation": {
+                    "description": "Detailed explanation of the result",
+                    "type": "string"
+                },
+                "success": {
+                    "description": "Whether the operation was successful",
+                    "type": "boolean"
+                }
+            },
+            "required": [
+                "explanation",
+                "success"
+            ],
+            "type": "object"
+        }
 
-    def create_run_feedback(self, run_id: UUID, request: FeedbackRequest) -> Feedback:
-        """Creates feedback for a run."""
         try:
-            response = create_feedback_sync(client=self._platform_client, run_id=run_id, body=request)
-            return response
-        except Exception as e:
-            logger.error(f"Error creating feedback: {e}")
-            raise e
+            request = CreateWorkflowRequest(
+                name=workflow_name,
+                result_schema=result_schema,
+                fields={"workflow_name": workflow_name, "start_url": start_url},
+                prompts=[prompt],
+                provider="openai"
+            )
 
-    def get_open_api_schema(self) -> Any:
-        """Retrieves the OpenAPI schema from the API."""
-        try:
-            response = get_open_api_sync(client=self._agents_client)
-            return response
+            return DefaultApi(self.client).create_workflow(
+                agent_name=agent_name,
+                create_workflow_request=request
+            )
         except Exception as e:
-            logger.error(f"Error retrieving OpenAPI schema: {e}")
-            raise e
+            logger.error(f"Failed to create workflow: {str(e)}")
+            raise
 
-    def health_check(self) -> Dict[str, Any]:
-        """Checks the health of the API."""
-        try:
-            response = health_check_sync(client=self._agents_client)
-            return response
-        except Exception as e:
-            logger.error(f"Error performing health check: {e}")
-            raise e
+    def execute_workflow(
+        self,
+        workflow_id: UUID,
+        execution_params: Dict[str, Any]
+    ) -> str:
+        """
+        Execute an existing workflow.
 
-    def get_run_status(self, run_id: UUID) -> Status:
-        """Retrieves the status of a run."""
-        try:
-            response = get_run_status_sync(client=self._platform_client, run_id=run_id)
-            if isinstance(response, ErrorResponse):
-                return None
-            return response
-        except Exception as e:
-            logger.error(f"Error retrieving run status: {e}")
-            raise e
+        Args:
+            workflow_id: ID of workflow to execute
+            execution_params: Parameters for workflow execution
 
-    def get_run_result(self, run_id: UUID) -> str:
-        """Retrieves the result of a run."""
+        Returns:
+            Execution ID
+        """
         try:
-            run = get_run_sync(client=self._platform_client, run_id=run_id)
-            metadata = run.metadata
-            if not metadata:
-                raise ApiError("Run metadata not found")
-            result = metadata.additional_properties.get('final_result')
-            if not result:
-                raise ApiError("Run result not found")
-            return result
+            return WorkflowApi(self.client).execute_workflow(
+                workflow_id=workflow_id,
+                request_body=execution_params
+            )
         except Exception as e:
-            logger.error(f"Error retrieving run result: {e}")
-            raise e
+            logger.error(f"Failed to execute workflow: {str(e)}")
+            raise
+
+    def get_workflow_executions(self) -> List[WorkflowExecution]:
+        """
+        Get list of workflow executions.
+
+        Returns:
+            List of workflow executions
+        """
+        try:
+            return WorkflowApi(self.client).get_agent_workflow_executions(
+                agent_name=agent_name
+            )
+        except Exception as e:
+            logger.error(f"Failed to get workflow executions: {str(e)}")
+            raise
+
+    def get_execution(self, execution_id: str) -> Execution:
+        """
+        Get the full execution details.
+
+        Args:
+            execution_id: ID of the execution to retrieve
+
+        Returns:
+            Execution object with full details
+        """
+        try:
+            return ExecutionApi(self.client).get_execution(id=execution_id)
+        except Exception as e:
+            logger.error(f"Failed to get execution: {str(e)}")
+            raise
+
+    def get_execution_status(self, execution_id: str) -> ExecutionStatus:
+        """
+        Get the current status of an execution.
+
+        Args:
+            execution_id: ID of the execution to check
+
+        Returns:
+            Current execution status
+        """
+        execution = self.get_execution(execution_id)
+        return execution.status
+
+    def get_execution_result(self, execution_id: str) -> ExecutionResult:
+        """
+        Get the result of an execution.
+
+        Args:
+            execution_id: ID of the execution to get results for
+
+        Returns:
+            ExecutionResult object containing status, result, and other metadata
+
+        Raises:
+            ValueError: If execution doesn't exist or hasn't completed
+        """
+        execution = self.get_execution(execution_id)
+        return ExecutionResult(execution)
+
+    def wait_for_execution(
+        self,
+        execution_id: str,
+        polling_interval: float = 1.0,
+        timeout: Optional[float] = None,
+        status_callback: Optional[Callable[[ExecutionStatus], None]] = None
+    ) -> ExecutionStatus:
+        """
+        Wait for an execution to reach a terminal state.
+
+        Args:
+            execution_id: ID of the execution to wait for
+            polling_interval: Time in seconds between status checks
+            timeout: Maximum time in seconds to wait. None means wait indefinitely
+            status_callback: Optional callback function that will be called with each status update
+
+        Returns:
+            Final execution status
+
+        Raises:
+            TimeoutError: If timeout is reached before execution reaches terminal state
+            ValueError: If execution_id is invalid
+        """
+        start_time = time.time()
+        last_status = None
+
+        while True:
+            # Check if we've exceeded timeout
+            if timeout and (time.time() - start_time) > timeout:
+                raise TimeoutError(f"Execution {execution_id} did not complete within {timeout} seconds")
+
+            # Get current status
+            current_status = self.get_execution_status(execution_id)
+
+            # Call status callback if status has changed
+            if status_callback and current_status != last_status:
+                status_callback(current_status)
+            last_status = current_status
+
+            # Check if we've reached a terminal state
+            if current_status.value.lower() in [state.value for state in ExecutionTerminalState]:
+                return current_status
+
+            # Wait before next check
+            time.sleep(polling_interval)
+
+    def wait_for_execution_result(
+        self,
+        execution_id: str,
+        polling_interval: float = 1.0,
+        timeout: Optional[float] = None,
+        status_callback: Optional[Callable[[ExecutionStatus], None]] = None
+    ) -> ExecutionResult:
+        """
+        Wait for an execution to complete and get its result.
+
+        Args:
+            execution_id: ID of the execution to wait for
+            polling_interval: Time in seconds between status checks
+            timeout: Maximum time in seconds to wait. None means wait indefinitely
+            status_callback: Optional callback function that will be called with each status update
+
+        Returns:
+            ExecutionResult object containing final status, result, and other metadata
+
+        Raises:
+            TimeoutError: If timeout is reached before execution completes
+            ValueError: If execution_id is invalid
+        """
+        # Wait for execution to reach terminal state
+        final_status = self.wait_for_execution(
+            execution_id=execution_id,
+            polling_interval=polling_interval,
+            timeout=timeout,
+            status_callback=status_callback
+        )
+
+        # Get the final result
+        result = self.get_execution_result(execution_id)
+
+        # If execution failed, include error information in logs
+        if final_status.value.lower() in [ExecutionTerminalState.FAILED.value, ExecutionTerminalState.ERROR.value]:
+            logger.error(f"Execution {execution_id} failed with error: {result.error}")
+
+        return result
+
+    def execute_workflow_and_get_result(
+        self,
+        workflow_id: UUID,
+        execution_params: Dict[str, Any],
+        polling_interval: float = 1.0,
+        timeout: Optional[float] = None,
+        status_callback: Optional[Callable[[ExecutionStatus], None]] = None
+    ) -> ExecutionResult:
+        """
+        Execute a workflow and wait for its result.
+
+        Args:
+            workflow_id: ID of workflow to execute
+            execution_params: Parameters for workflow execution
+            polling_interval: Time in seconds between status checks
+            timeout: Maximum time in seconds to wait. None means wait indefinitely
+            status_callback: Optional callback function that will be called with each status update
+
+        Returns:
+            ExecutionResult object containing final status, result, and other metadata
+        """
+        # Start execution
+        execution_id = self.execute_workflow(workflow_id, execution_params)
+
+        # Wait for result
+        return self.wait_for_execution_result(
+            execution_id=execution_id,
+            polling_interval=polling_interval,
+            timeout=timeout,
+            status_callback=status_callback
+        )
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
