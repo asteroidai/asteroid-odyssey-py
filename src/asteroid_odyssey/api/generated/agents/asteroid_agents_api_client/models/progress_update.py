@@ -17,21 +17,20 @@ import pprint
 import re  # noqa: F401
 import json
 
+from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field, StrictStr
 from typing import Any, ClassVar, Dict, List
 from typing import Optional, Set
 from typing_extensions import Self
 
-class Agent(BaseModel):
+class ProgressUpdate(BaseModel):
     """
-    Agent
+    ProgressUpdate
     """ # noqa: E501
-    name: StrictStr = Field(description="The name of the agent")
-    description: StrictStr = Field(description="The description of the agent")
-    visibility: StrictStr = Field(description="The visibility of the agent")
-    required_fields: List[StrictStr] = Field(description="The required fields for the agent")
-    required_prompts: List[StrictStr] = Field(description="The prompts for the agent")
-    __properties: ClassVar[List[str]] = ["name", "description", "visibility", "required_fields", "required_prompts"]
+    execution_id: StrictStr = Field(description="The execution ID")
+    progress: StrictStr = Field(description="The progress of the execution")
+    created_at: datetime = Field(description="The date and time the progress was created")
+    __properties: ClassVar[List[str]] = ["execution_id", "progress", "created_at"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -51,7 +50,7 @@ class Agent(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of Agent from a JSON string"""
+        """Create an instance of ProgressUpdate from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -76,7 +75,7 @@ class Agent(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of Agent from a dict"""
+        """Create an instance of ProgressUpdate from a dict"""
         if obj is None:
             return None
 
@@ -84,11 +83,9 @@ class Agent(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "name": obj.get("name"),
-            "description": obj.get("description"),
-            "visibility": obj.get("visibility"),
-            "required_fields": obj.get("required_fields"),
-            "required_prompts": obj.get("required_prompts")
+            "execution_id": obj.get("execution_id"),
+            "progress": obj.get("progress"),
+            "created_at": obj.get("created_at")
         })
         return _obj
 
