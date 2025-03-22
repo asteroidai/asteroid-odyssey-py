@@ -5,19 +5,23 @@ import time
 from enum import Enum
 import os
 
-from .api.generated.agents.asteroid_agents_api_client.models import (
+from .api.generated.asteroid_agents_api_client.models import (
     CreateWorkflowRequest,
     WorkflowExecution,
     ExecutionStatus,
-    Execution
+    Execution,
+    WorkflowExecutionRequest,
+    Agent,
+    ResultSchema,
+    CreateWorkflowRequestFields,
+    CreateWorkflowRequestProvider
 )
-from .api.generated.agents.asteroid_agents_api_client.api_client import ApiClient
-from .api.generated.agents.asteroid_agents_api_client.configuration import Configuration
-from .api.generated.agents.asteroid_agents_api_client.api.execution_api import ExecutionApi
-from .api.generated.agents.asteroid_agents_api_client.api.agent_api import AgentApi
-from .api.generated.agents.asteroid_agents_api_client.api.default_api import DefaultApi
-from .api.generated.agents.asteroid_agents_api_client.api.workflow_api import WorkflowApi
-
+from .api.generated.asteroid_agents_api_client.client import Client as ApiClient
+from .api.generated.asteroid_agents_api_client.api.execution.get_execution import sync_detailed as get_execution
+from .api.generated.asteroid_agents_api_client.api.agent.get_agents import sync_detailed as get_agents
+from .api.generated.asteroid_agents_api_client.api.default.create_workflow import sync_detailed as create_workflow
+from .api.generated.asteroid_agents_api_client.api.workflow.get_agent_workflow_executions import sync_detailed as get_agent_workflow_executions
+from .api.generated.asteroid_agents_api_client.api.workflow.execute_workflow import sync_detailed as execute_workflow
 logger = logging.getLogger(__name__)
 
 class ExecutionTerminalState(Enum):
@@ -63,19 +67,15 @@ class AsteroidClient:
                 "API key is required. Either pass it directly or set ASTEROID_API_KEY environment variable"
             )
 
-        self.base_url = base_url or "https://api.asteroid.ai/v1"
-        
-        # Initialize configuration
-        self.config = Configuration(
-            host=self.base_url,
-            api_key={"ApiKeyAuth": self.api_key},
-            verify_ssl=verify_ssl
-        )
-        
+        self.base_url = base_url or "https://odyssey.asteroid.ai/api/v1"
         # Initialize API client
-        self.client = ApiClient(configuration=self.config)
+        self.client = ApiClient(
+            base_url=self.base_url,
+            verify_ssl=verify_ssl,
+            headers={"X-Asteroid-Agents-Api-Key": f"{self.api_key}"}
+        )
 
-    def get_agents(self) -> List[Dict[str, Any]]:
+    def get_agents(self) -> List["Agent"]:
         """
         Get list of available agents.
         
@@ -83,7 +83,12 @@ class AsteroidClient:
             List of agent details
         """
         try:
-            return AgentApi(self.client).get_agents()
+            result = get_agents(client=self.client)
+            print(result)
+            result = result.parsed
+            if not isinstance(result, List):
+                raise ValueError("The result is not of type List, it is of type: ", type(result))
+            return result
         except Exception as e:
             logger.error(f"Failed to get agents: {str(e)}")
             raise
@@ -104,7 +109,8 @@ class AsteroidClient:
         Returns:
             Workflow ID
         """
-        result_schema = {
+        result_schema = ResultSchema()
+        result_schema.additional_properties = {
             "properties": {
                 "explanation": {
                     "description": "Detailed explanation of the result",
@@ -123,18 +129,28 @@ class AsteroidClient:
         }
 
         try:
+            fields = CreateWorkflowRequestFields()
+            fields.additional_properties = {
+                "workflow_name": workflow_name,
+                "start_url": start_url
+            }
+
             request = CreateWorkflowRequest(
                 name=workflow_name,
                 result_schema=result_schema,
-                fields={"workflow_name": workflow_name, "start_url": start_url},
+                fields=fields,
                 prompts=[prompt],
-                provider="openai"
+                provider=CreateWorkflowRequestProvider.OPENAI
             )
 
-            return DefaultApi(self.client).create_workflow(
+            result = create_workflow(
                 agent_name=agent_name,
-                create_workflow_request=request
-            )
+                body=request,
+                client=self.client
+            ).parsed
+            if not isinstance(result, str):
+                raise ValueError("The result is not of type str")
+            return result
         except Exception as e:
             logger.error(f"Failed to create workflow: {str(e)}")
             raise
@@ -155,10 +171,17 @@ class AsteroidClient:
             Execution ID
         """
         try:
-            return WorkflowApi(self.client).execute_workflow(
+            # Convert execution_params to WorkflowExecutionRequest
+            request_body = WorkflowExecutionRequest(**execution_params)
+            
+            result = execute_workflow(
                 workflow_id=workflow_id,
-                request_body=execution_params
-            )
+                body=request_body,
+                client=self.client
+            ).parsed
+            if not isinstance(result, str):
+                raise ValueError("The result is not of type str")
+            return result
         except Exception as e:
             logger.error(f"Failed to execute workflow: {str(e)}")
             raise
@@ -171,9 +194,13 @@ class AsteroidClient:
             List of workflow executions
         """
         try:
-            return WorkflowApi(self.client).get_agent_workflow_executions(
-                agent_name=agent_name
-            )
+            result = get_agent_workflow_executions(
+                agent_name=agent_name,
+                client=self.client
+            ).parsed
+            if not isinstance(result, List):
+                raise ValueError("The result is not of type List")
+            return result
         except Exception as e:
             logger.error(f"Failed to get workflow executions: {str(e)}")
             raise
@@ -189,7 +216,10 @@ class AsteroidClient:
             Execution object with full details
         """
         try:
-            return ExecutionApi(self.client).get_execution(id=execution_id)
+            result = get_execution(id=UUID(execution_id), client=self.client).parsed
+            if not isinstance(result, Execution):
+                raise ValueError("The result is not of type Execution")
+            return result
         except Exception as e:
             logger.error(f"Failed to get execution: {str(e)}")
             raise
@@ -205,6 +235,8 @@ class AsteroidClient:
             Current execution status
         """
         execution = self.get_execution(execution_id)
+        if not isinstance(execution.status, ExecutionStatus):
+            raise ValueError("The execution status is not of type ExecutionStatus")
         return execution.status
 
     def get_execution_result(self, execution_id: str) -> ExecutionResult:
@@ -263,7 +295,7 @@ class AsteroidClient:
             last_status = current_status
 
             # Check if we've reached a terminal state
-            if current_status.value.lower() in [state.value for state in ExecutionTerminalState]:
+            if current_status in ExecutionTerminalState:
                 return current_status
 
             # Wait before next check
@@ -304,7 +336,7 @@ class AsteroidClient:
         result = self.get_execution_result(execution_id)
 
         # If execution failed, include error information in logs
-        if final_status.value.lower() in [ExecutionTerminalState.FAILED.value, ExecutionTerminalState.ERROR.value]:
+        if final_status in [ExecutionTerminalState.FAILED, ExecutionTerminalState.ERROR]:
             logger.error(f"Execution {execution_id} failed with error: {result.error}")
 
         return result
