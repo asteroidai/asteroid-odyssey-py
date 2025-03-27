@@ -18,7 +18,7 @@ from .api.generated.asteroid_agents_api_client.models import (
 )
 from .api.generated.asteroid_agents_api_client.client import Client as ApiClient
 from .api.generated.asteroid_agents_api_client.api.execution.get_execution import sync_detailed as get_execution
-from .api.generated.asteroid_agents_api_client.api.agent.get_agents import sync_detailed as get_agents
+from .api.generated.asteroid_agents_api_client.api.agent.get_agents import sync_detailed as asteroid_get_agents
 from .api.generated.asteroid_agents_api_client.api.default.create_workflow import sync_detailed as create_workflow
 from .api.generated.asteroid_agents_api_client.api.workflow.get_agent_workflow_executions import sync_detailed as get_agent_workflow_executions
 from .api.generated.asteroid_agents_api_client.api.workflow.execute_workflow import sync_detailed as execute_workflow
@@ -83,12 +83,12 @@ class AsteroidClient:
             List of agent details
         """
         try:
-            result = get_agents(client=self.client)
-            print(result)
-            result = result.parsed
-            if not isinstance(result, List):
-                raise ValueError("The result is not of type List, it is of type: ", type(result))
-            return result
+            result = asteroid_get_agents(client=self.client)
+            if result.parsed is None:
+                raise ValueError("No agents were returned from the API")
+            if not isinstance(result.parsed, list):
+                raise ValueError(f"The result is not of type list, it is of type: {type(result.parsed)}")
+            return result.parsed
         except Exception as e:
             logger.error(f"Failed to get agents: {str(e)}")
             raise
@@ -97,20 +97,31 @@ class AsteroidClient:
         self, 
         workflow_name: str,
         start_url: str,
-        prompt: str
+        prompt: str,
+        result_schema: Optional[ResultSchema] = None
     ) -> str:
         """
         Create a new workflow for an agent.
 
         Args:
-            agent_name: Name of the agent to create workflow for
-            workflow_config: Configuration for the workflow
+            workflow_name: Name of the workflow
+            start_url: Starting URL for the workflow
+            prompt: Prompt for the workflow
+            result_schema: Optional custom result schema. Currently not fully supported.
 
         Returns:
             Workflow ID
+
+        Warning:
+            Custom result schemas are not fully supported yet and will be added in a future update.
+            Currently, only the default schema will be used regardless of input.
         """
-        result_schema = ResultSchema()
-        result_schema.additional_properties = {
+        if result_schema is not None:
+            logger.warning("Custom result schemas are not fully supported yet and will be ignored. Using default schema.")
+
+        # Default result schema
+        default_schema = ResultSchema()
+        default_schema.additional_properties = {
             "properties": {
                 "explanation": {
                     "description": "Detailed explanation of the result",
@@ -127,6 +138,9 @@ class AsteroidClient:
             ],
             "type": "object"
         }
+        
+        if result_schema is None:
+            result_schema = default_schema
 
         try:
             fields = CreateWorkflowRequestFields()
@@ -171,8 +185,8 @@ class AsteroidClient:
             Execution ID
         """
         try:
-            # Convert execution_params to WorkflowExecutionRequest
-            request_body = WorkflowExecutionRequest(**execution_params)
+            # Convert execution_params to WorkflowExecutionRequest using from_dict
+            request_body = WorkflowExecutionRequest.from_dict(execution_params)
             
             result = execute_workflow(
                 workflow_id=workflow_id,
@@ -295,7 +309,7 @@ class AsteroidClient:
             last_status = current_status
 
             # Check if we've reached a terminal state
-            if current_status in ExecutionTerminalState:
+            if current_status.status.value in [state.value for state in ExecutionTerminalState]:
                 return current_status
 
             # Wait before next check
