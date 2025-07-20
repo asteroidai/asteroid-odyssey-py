@@ -1,173 +1,444 @@
-import logging
+"""
+Asteroid Agents Python SDK - High-Level Client Interface
+
+Provides a clean, easy-to-use interface for interacting with the Asteroid Agents API,
+similar to the TypeScript SDK.
+
+This module provides a high-level client that wraps the generated OpenAPI client
+without modifying any generated files.
+"""
+
+import time
 import os
-from typing import Optional, List, Dict, Any
-from uuid import UUID
-
-from asteroid_odyssey.api.generated.agents.asteroid_agents_api_client.api.agent.get_agents import sync as get_agents_sync
-from asteroid_odyssey.api.generated.agents.asteroid_agents_api_client.api.api.get_open_api import sync_detailed as get_open_api_sync
-from asteroid_odyssey.api.generated.agents.asteroid_agents_api_client.api.default.create_workflow import sync as create_workflow_sync
-from asteroid_odyssey.api.generated.agents.asteroid_agents_api_client.api.default.health_check import sync as health_check_sync
-from asteroid_odyssey.api.generated.agents.asteroid_agents_api_client.api.workflow.execute_workflow import sync as execute_workflow_sync
-from asteroid_odyssey.api.generated.agents.asteroid_agents_api_client.api.workflow.get_workflow_executions import \
-    sync as get_workflow_executions_sync
-from asteroid_odyssey.api.generated.agents.asteroid_agents_api_client.client import Client as AgentsClient
-from asteroid_odyssey.api.generated.agents.asteroid_agents_api_client.models import CreateWorkflowRequest, WorkflowExecutionRequest, \
-    WorkflowExecution
-from asteroid_odyssey.api.generated.platform.asteroid_api_client.api.api_key.validate_api_key import \
-    sync_detailed as validate_api_key_sync
-from asteroid_odyssey.api.generated.platform.asteroid_api_client.api.improve.create_feedback import sync_detailed as create_feedback_sync
-from asteroid_odyssey.api.generated.platform.asteroid_api_client.api.run.get_run import sync as get_run_sync
-from asteroid_odyssey.api.generated.platform.asteroid_api_client.api.run.get_run_status import sync as get_run_status_sync
-from asteroid_odyssey.api.generated.platform.asteroid_api_client.client import Client as PlatformClient
-from asteroid_odyssey.api.generated.platform.asteroid_api_client.models import Status
-from asteroid_odyssey.api.generated.platform.asteroid_api_client.models.error_response import ErrorResponse
-from asteroid_odyssey.api.generated.platform.asteroid_api_client.models.feedback import Feedback
-from asteroid_odyssey.api.generated.platform.asteroid_api_client.models.feedback_request import FeedbackRequest
-from asteroid_odyssey.exceptions import ApiError
-
-# Logger
-logger = logging.getLogger(__name__)
+from typing import Dict, Any, Optional, List, Union, Tuple
+from openapi_client import (
+    Configuration,
+    ApiClient,
+    SDKApi,
+    ExecutionApi,
+    ExecutionStatusResponse,
+    ExecutionResultResponse,
+    BrowserSessionRecordingResponse,
+    UploadExecutionFiles200Response,
+    Status,
+    StructuredAgentExecutionRequest
+)
+from openapi_client.exceptions import ApiException
 
 
-class Odyssey:
-    """Wrapper for the generated API client."""
-
-    def __init__(
-            self,
-            api_key: Optional[str] = None,
-            agents_base_url: Optional[str] = None,
-            platform_base_url: Optional[str] = None
-    ):
-        """Initialize the client.
-
+class AsteroidClient:
+    """
+    High-level client for the Asteroid Agents API.
+    
+    This class provides a convenient interface for executing agents and managing
+    their execution lifecycle, similar to the TypeScript SDK.
+    """
+    
+    def __init__(self, api_key: str, base_url: Optional[str] = None):
+        """
+        Create an API client with the provided API key.
+        
         Args:
-            api_key: Optional API key for authentication
-            agents_base_url: Base URL for the agents API
-            platform_base_url: Base URL for the platform API
+            api_key: Your API key for authentication
+            base_url: Optional base URL (defaults to https://odyssey.asteroid.ai/api/v1)
+        
+        Example:
+            client = AsteroidClient('your-api-key')
         """
         if api_key is None:
-            api_key = os.getenv("ASTEROID_API_KEY")
-            if not api_key:
-                raise ApiError(
-                    "Asteroid API key is required, please set the ASTEROID_API_KEY environment variable. You can get one from https://platform.asteroid.com/")
-
-        if agents_base_url is None:
-            from_env = os.getenv("ASTEROID_AGENTS_API_URL")
-            if not from_env:
-                from_env = "https://odyssey.asteroid.ai/api/v1"
-            agents_base_url = from_env
-
-        if platform_base_url is None:
-            from_env = os.getenv("ASTEROID_API_URL")
-            if not from_env:
-                from_env = "https://platform.asteroid.com/api/v1"
-            platform_base_url = from_env
-
-        self._agents_client = AgentsClient(
-            base_url=agents_base_url,
-            verify_ssl=False,
-            headers={"X-Asteroid-Agents-Api-Key": f"{api_key}"}
+            raise TypeError("API key cannot be None")
+        
+        # Configure the API client
+        config = Configuration(
+            host=base_url or "https://odyssey.asteroid.ai/api/v1",
+            api_key={'ApiKeyAuth': api_key}
         )
-
-        self._platform_client = PlatformClient(
-            base_url=platform_base_url,
-            verify_ssl=False,
-            headers={"X-Asteroid-Api-Key": f"{api_key}"}
-        )
-
-        print(f"Validating API key")
+        
+        self.api_client = ApiClient(config)
+        self.sdk_api = SDKApi(self.api_client)
+        self.execution_api = ExecutionApi(self.api_client)
+        
+    def execute_agent(self, agent_id: str, agent_profile_id: str, execution_data: Dict[str, Any]) -> str: 
+        """
+        Execute an agent with the provided parameters.
+        
+        Args:
+            agent_id: The ID of the agent to execute
+            agent_profile_id: The ID of the agent profile
+            execution_data: The execution parameters
+            
+        Returns:
+            The execution ID
+            
+        Raises:
+            Exception: If the execution request fails
+            
+        Example:
+            execution_id = client.execute_structured_agent('my-agent-id', 'agent-profile-id', {'input': 'some dynamic value'})
+        """
+        req = StructuredAgentExecutionRequest(agent_profile_id=agent_profile_id, dynamic_data=execution_data)
         try:
-            response = validate_api_key_sync(client=self._platform_client)
-            print(f"Response: {response}")
-        except Exception as e:
-            print(f"Error validating API key: {e}")
-            raise e
-
-    def get_agents(self) -> List[Dict[str, Any]]:
-        """Retrieves a list of all agents."""
+            response = self.sdk_api.execute_agent_structured(agent_id, req)
+            return response.execution_id
+        except ApiException as e:
+            raise Exception(f"Failed to execute agent: {e}")
+    
+    def get_execution_status(self, execution_id: str) -> ExecutionStatusResponse:
+        """
+        Get the current status for an execution.
+        
+        Args:
+            execution_id: The execution identifier
+            
+        Returns:
+            The execution status details
+            
+        Raises:
+            Exception: If the status request fails
+            
+        Example:
+            status = client.get_execution_status(execution_id)
+            print(status.status)
+        """
         try:
-            response = get_agents_sync(client=self._agents_client)
+            return self.sdk_api.get_execution_status(execution_id)
+        except ApiException as e:
+            raise Exception(f"Failed to get execution status: {e}")
+    
+    def get_execution_result(self, execution_id: str) -> Dict[str, Any]:
+        """
+        Get the final result of an execution.
+        
+        Args:
+            execution_id: The execution identifier
+            
+        Returns:
+            The result object of the execution
+            
+        Raises:
+            Exception: If the result request fails or execution failed
+            
+        Example:
+            result = client.get_execution_result(execution_id)
+            print(result)
+        """
+        try:
+            response = self.sdk_api.get_execution_result(execution_id)
+            
+            if response.error:
+                raise Exception(response.error)
+            
+            return response.result or {}
+        except ApiException as e:
+            raise Exception(f"Failed to get execution result: {e}")
+    
+    def wait_for_execution_result(
+        self, 
+        execution_id: str, 
+        interval: float = 1.0, 
+        timeout: float = 3600.0
+    ) -> Dict[str, Any]:
+        """
+        Wait for an execution to reach a terminal state and return the result.
+        
+        Continuously polls the execution status until it's either "completed", 
+        "cancelled", or "failed".
+        
+        Args:
+            execution_id: The execution identifier
+            interval: Polling interval in seconds (default is 1.0)
+            timeout: Maximum wait time in seconds (default is 3600 - 1 hour)
+            
+        Returns:
+            The execution result if completed
+            
+        Raises:
+            Exception: If the execution ends as "cancelled" or "failed", or times out
+            
+        Example:
+            result = client.wait_for_execution_result(execution_id, interval=2.0)
+        """
+        start_time = time.time()
+        
+        while True:
+            elapsed_time = time.time() - start_time
+            if elapsed_time >= timeout:
+                raise Exception(f"Execution {execution_id} timed out after {timeout}s")
+            
+            status_response = self.get_execution_status(execution_id)
+            current_status = status_response.status
+            
+            if current_status == Status.COMPLETED:
+                return self.get_execution_result(execution_id)
+            elif current_status in [Status.FAILED, Status.CANCELLED]:
+                reason = f" - {status_response.reason}" if status_response.reason else ""
+                raise Exception(f"Execution {execution_id} ended with status: {current_status.value}{reason}")
+            
+            # Wait for the specified interval before polling again
+            time.sleep(interval)
+    
+    def upload_execution_files(
+        self, 
+        execution_id: str, 
+        files: List[Union[bytes, str, Tuple[str, bytes]]],
+        default_filename: str = "file.txt"
+    ) -> UploadExecutionFiles200Response:
+        """
+        Upload files to an execution.
+        
+        Args:
+            execution_id: The execution identifier
+            files: List of files to upload. Each file can be:
+                   - bytes: Raw file content (will use default_filename)
+                   - str: File path as string (will read file and use filename)
+                   - Tuple[str, bytes]: (filename, file_content) tuple
+            default_filename: Default filename to use when file is provided as bytes
+            
+        Returns:
+            The upload response containing message and file IDs
+            
+        Raises:
+            Exception: If the upload request fails
+            
+        Example:
+            # Upload with file content (file should be in your current working directory)
+            with open('hello.txt', 'r') as f:
+                file_content = f.read()
+            
+            response = client.upload_execution_files(execution_id, [file_content.encode()])
+            print(f"Uploaded files: {response.file_ids}")
+            
+            # Upload with filename and content
+            files = [('hello.txt', file_content.encode())]
+            response = client.upload_execution_files(execution_id, files)
+            
+            # Or create content directly
+            hello_content = "Hello World!".encode()
+            response = client.upload_execution_files(execution_id, [hello_content])
+        """
+        try:
+            # Process files to ensure proper format
+            processed_files = []
+            for file_item in files:
+                if isinstance(file_item, tuple):
+                    # Already in (filename, content) format
+                    filename, content = file_item
+                    if isinstance(content, str):
+                        content = content.encode()
+                    processed_files.append((filename, content))
+                elif isinstance(file_item, str):
+                    # Check if string is a file path that exists, otherwise treat as content
+                    if os.path.isfile(file_item):
+                        # File path - read the file
+                        filename = os.path.basename(file_item)
+                        with open(file_item, 'rb') as f:
+                            content = f.read()
+                        processed_files.append((filename, content))
+                    else:
+                        # String content - encode and use default filename
+                        content = file_item.encode()
+                        processed_files.append((default_filename, content))
+                elif isinstance(file_item, bytes):
+                    # Raw bytes - use default filename
+                    processed_files.append((default_filename, file_item))
+                else:
+                    # Other types - convert to string content and encode
+                    content = str(file_item).encode()
+                    processed_files.append((default_filename, content))
+            
+            response = self.execution_api.upload_execution_files(execution_id, files=processed_files)
             return response
-        except Exception as e:
-            logger.error(f"Error retrieving agents: {e}")
-            raise e
-
-    def create_workflow(self, agent_name: str, request: CreateWorkflowRequest) -> str:
-        """Creates a new workflow for a given agent."""
+        except ApiException as e:
+            raise Exception(f"Failed to upload execution files: {e}")
+    
+    def get_browser_session_recording(self, execution_id: str) -> str:
+        """
+        Get the browser session recording URL for a completed execution.
+        
+        Args:
+            execution_id: The execution identifier
+            
+        Returns:
+            The URL of the browser session recording
+            
+        Raises:
+            Exception: If the recording request fails
+            
+        Example:
+            recording_url = client.get_browser_session_recording(execution_id)
+            print(f"Recording available at: {recording_url}")
+        """
         try:
-            workflow_id = create_workflow_sync(client=self._agents_client, agent_name=agent_name, body=request)
-            return workflow_id
-        except Exception as e:
-            logger.error(f"Error creating workflow: {e}")
-            raise e
+            response = self.sdk_api.get_browser_session_recording(execution_id)
+            return response.recording_url
+        except ApiException as e:
+            raise Exception(f"Failed to get browser session recording: {e}")
+    
+    def __enter__(self):
+        """Context manager entry."""
+        return self
+    
+    def __exit__(self, exc_type, exc_value, traceback):
+        """Context manager exit."""
+        pass
 
-    def run_workflow(self, workflow_id: UUID, request: WorkflowExecutionRequest) -> str:
-        """Executes a saved workflow for an agent."""
-        try:
-            response = execute_workflow_sync(client=self._agents_client, workflow_id=workflow_id, body=request)
-            return response
-        except Exception as e:
-            logger.error(f"Error running workflow: {e}")
-            raise e
 
-    def get_workflow_runs(self) -> list[WorkflowExecution] | None:
-        """Retrieves all workflows along with their executions."""
-        try:
-            response = get_workflow_executions_sync(client=self._agents_client)
-            return response
-        except Exception as e:
-            logger.error(f"Error retrieving workflow runs: {e}")
-            raise e
+# Convenience functions that mirror the TypeScript SDK pattern
+def create_client(api_key: str, base_url: Optional[str] = None) -> AsteroidClient:
+    """
+    Create an API client with a provided API key.
+    
+    This is a convenience function that creates an AsteroidClient instance.
+    
+    Args:
+        api_key: Your API key
+        base_url: Optional base URL
+        
+    Returns:
+        A configured AsteroidClient instance
+        
+    Example:
+        client = create_client('your-api-key')
+    """
+    return AsteroidClient(api_key, base_url)
 
-    def create_run_feedback(self, run_id: UUID, request: FeedbackRequest) -> Feedback:
-        """Creates feedback for a run."""
-        try:
-            response = create_feedback_sync(client=self._platform_client, run_id=run_id, body=request)
-            return response
-        except Exception as e:
-            logger.error(f"Error creating feedback: {e}")
-            raise e
+def execute_agent(client: AsteroidClient, agent_id: str, agent_profile_id: str, execution_data: Dict[str, Any]) -> str:
+    """
+    Execute an agent with the provided parameters.
+    
+    Args:
+        client: The AsteroidClient instance
+        agent_id: The ID of the agent to execute
+        agent_profile_id: The ID of the agent profile
+        execution_data: The execution parameters
+        
+    Returns:
+        The execution ID
+        
+    Example:
+        execution_id = execute_agent(client, 'my-agent-id', {'input': 'some dynamic value'})
+    """
+    return client.execute_agent(agent_id, agent_profile_id, execution_data)
 
-    def get_open_api_schema(self) -> Any:
-        """Retrieves the OpenAPI schema from the API."""
-        try:
-            response = get_open_api_sync(client=self._agents_client)
-            return response
-        except Exception as e:
-            logger.error(f"Error retrieving OpenAPI schema: {e}")
-            raise e
 
-    def health_check(self) -> Dict[str, Any]:
-        """Checks the health of the API."""
-        try:
-            response = health_check_sync(client=self._agents_client)
-            return response
-        except Exception as e:
-            logger.error(f"Error performing health check: {e}")
-            raise e
 
-    def get_run_status(self, run_id: UUID) -> Status:
-        """Retrieves the status of a run."""
-        try:
-            response = get_run_status_sync(client=self._platform_client, run_id=run_id)
-            if isinstance(response, ErrorResponse):
-                return None
-            return response
-        except Exception as e:
-            logger.error(f"Error retrieving run status: {e}")
-            raise e
+def get_execution_status(client: AsteroidClient, execution_id: str) -> ExecutionStatusResponse:
+    """
+    Get the current status for an execution.
+    
+    Args:
+        client: The AsteroidClient instance
+        execution_id: The execution identifier
+        
+    Returns:
+        The execution status details
+        
+    Example:
+        status = get_execution_status(client, execution_id)
+        print(status.status)
+    """
+    return client.get_execution_status(execution_id)
 
-    def get_run_result(self, run_id: UUID) -> str:
-        """Retrieves the result of a run."""
-        try:
-            run = get_run_sync(client=self._platform_client, run_id=run_id)
-            metadata = run.metadata
-            if not metadata:
-                raise ApiError("Run metadata not found")
-            result = metadata.additional_properties.get('final_result')
-            if not result:
-                raise ApiError("Run result not found")
-            return result
-        except Exception as e:
-            logger.error(f"Error retrieving run result: {e}")
-            raise e
+
+def get_execution_result(client: AsteroidClient, execution_id: str) -> Dict[str, Any]:
+    """
+    Get the final result of an execution.
+    
+    Args:
+        client: The AsteroidClient instance
+        execution_id: The execution identifier
+        
+    Returns:
+        The result object of the execution
+        
+    Example:
+        result = get_execution_result(client, execution_id)
+        print(result)
+    """
+    return client.get_execution_result(execution_id)
+
+
+def wait_for_execution_result(
+    client: AsteroidClient, 
+    execution_id: str, 
+    interval: float = 1.0, 
+    timeout: float = 3600.0
+) -> Dict[str, Any]:
+    """
+    Wait for an execution to reach a terminal state and return the result.
+    
+    Args:
+        client: The AsteroidClient instance
+        execution_id: The execution identifier
+        interval: Polling interval in seconds (default is 1.0)
+        timeout: Maximum wait time in seconds (default is 3600 - 1 hour)
+        
+    Returns:
+        The execution result if completed
+        
+    Example:
+        result = wait_for_execution_result(client, execution_id, interval=2.0)
+    """
+    return client.wait_for_execution_result(execution_id, interval, timeout)
+
+
+def upload_execution_files(
+    client: AsteroidClient, 
+    execution_id: str, 
+    files: List[Union[bytes, str, Tuple[str, bytes]]],
+    default_filename: str = "file.txt"
+) -> UploadExecutionFiles200Response:
+    """
+    Upload files to an execution.
+    
+    Args:
+        client: The AsteroidClient instance
+        execution_id: The execution identifier
+        files: List of files to upload
+        default_filename: Default filename to use when file is provided as bytes
+        
+    Returns:
+        The upload response containing message and file IDs
+        
+    Example:
+        # Create a simple text file with "Hello World!" content
+        hello_content = "Hello World!".encode()
+        response = upload_execution_files(client, execution_id, [hello_content])
+        print(f"Uploaded files: {response.file_ids}")
+        
+        # Or specify filename with content
+        files = [('hello.txt', "Hello World!".encode())]
+        response = upload_execution_files(client, execution_id, files)
+    """
+    return client.upload_execution_files(execution_id, files, default_filename)
+
+
+def get_browser_session_recording(client: AsteroidClient, execution_id: str) -> str:
+    """
+    Get the browser session recording URL for a completed execution.
+    
+    Args:
+        client: The AsteroidClient instance
+        execution_id: The execution identifier
+        
+    Returns:
+        The URL of the browser session recording
+        
+    Example:
+        recording_url = get_browser_session_recording(client, execution_id)
+        print(f"Recording available at: {recording_url}")
+    """
+    return client.get_browser_session_recording(execution_id)
+
+
+# Re-export common types for convenience
+__all__ = [
+    'AsteroidClient',
+    'create_client',
+    'execute_agent',
+    'get_execution_status',
+    'get_execution_result',
+    'wait_for_execution_result',
+    'upload_execution_files',
+    'get_browser_session_recording'
+] 

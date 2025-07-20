@@ -1,6 +1,21 @@
-"""Asteroid Odyssey SDK for space exploration simulations."""
+from .client import (
+    AsteroidClient,
+    create_client,
+    execute_agent,
+    get_execution_status,
+    get_execution_result,
+    wait_for_execution_result,
+    upload_execution_files,
+    get_browser_session_recording
+)
 
-from asteroid_odyssey.client import Odyssey
-
-__version__ = "0.1.20"
-__all__ = ["Odyssey"]
+__all__ = [
+    'AsteroidClient',
+    'create_client',
+    'execute_agent',
+    'get_execution_status',
+    'get_execution_result',
+    'wait_for_execution_result',
+    'upload_execution_files',
+    'get_browser_session_recording'
+]
