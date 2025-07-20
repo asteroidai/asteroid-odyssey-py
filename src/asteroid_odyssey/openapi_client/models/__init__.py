@@ -23,4 +23,5 @@ from openapi_client.models.execution_status_response import ExecutionStatusRespo
 from openapi_client.models.health_check200_response import HealthCheck200Response
 from openapi_client.models.health_check500_response import HealthCheck500Response
 from openapi_client.models.status import Status
+from openapi_client.models.structured_agent_execution_request import StructuredAgentExecutionRequest
 from openapi_client.models.upload_execution_files200_response import UploadExecutionFiles200Response

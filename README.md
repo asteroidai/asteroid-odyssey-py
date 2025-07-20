@@ -82,7 +82,7 @@ result = wait_for_execution_result(client, execution_id)
 
 The main client class provides the following methods:
 
-- `execute_agent(agent_id, execution_data)` - Execute an agent and return execution ID
+- `execute_agent(agent_id, agent_profile_id, execution_data)` - Execute an agent and return execution ID
 - `get_execution_status(execution_id)` - Get current execution status
 - `get_execution_result(execution_id)` - Get final execution result
 - `wait_for_execution_result(execution_id, interval=1.0, timeout=3600.0)` - Wait for completion
@@ -124,7 +124,7 @@ Class | Method | HTTP request | Description
 *APIApi* | [**get_open_api**](docs/APIApi.md#get_open_api) | **GET** /openapi.yaml | Get the OpenAPI schema
 *APIApi* | [**health_check**](docs/APIApi.md#health_check) | **GET** /health | Check the health of the API
 *ExecutionApi* | [**upload_execution_files**](docs/ExecutionApi.md#upload_execution_files) | **POST** /execution/{id}/files | Upload files to an execution
-*SDKApi* | [**execute_agent**](docs/SDKApi.md#execute_agent) | **POST** /agent/{id} | Execute an agent
+*SDKApi* | [**execute_agent**](docs/SDKApi.md#execute_structured_agent) | **POST** /agent/{id} | Execute an agent
 *SDKApi* | [**get_browser_session_recording**](docs/SDKApi.md#get_browser_session_recording) | **GET** /execution/{id}/browser_session/recording | Get browser session recording
 *SDKApi* | [**get_execution_result**](docs/SDKApi.md#get_execution_result) | **GET** /execution/{id}/result | Get execution result
 *SDKApi* | [**get_execution_status**](docs/SDKApi.md#get_execution_status) | **GET** /execution/{id}/status | Get execution status
@@ -155,6 +155,20 @@ Authentication schemes defined for the API:
 - **Type**: API key
 - **API key parameter name**: X-Asteroid-Agents-Api-Key
 - **Location**: HTTP header
+
+## Regenerating the SDK
+
+To update the SDK, regenerate the code by running
+
+```bash
+ npx @openapitools/openapi-generator-cli generate \
+  -i https://odyssey.asteroid.ai/api/v1/openapi.yaml \
+  -g python \
+  -o . 
+
+ ```
+
+After generation, ensure `pyproject.toml` is configured correctly and that files are modified correctly. Check for new files and if they are needed.
 
 
 

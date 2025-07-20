@@ -20,7 +20,8 @@ from openapi_client import (
     ExecutionResultResponse,
     BrowserSessionRecordingResponse,
     UploadExecutionFiles200Response,
-    Status
+    Status,
+    StructuredAgentExecutionRequest
 )
 from openapi_client.exceptions import ApiException
 
@@ -56,13 +57,14 @@ class AsteroidClient:
         self.api_client = ApiClient(config)
         self.sdk_api = SDKApi(self.api_client)
         self.execution_api = ExecutionApi(self.api_client)
-    
-    def execute_agent(self, agent_id: str, execution_data: Dict[str, Any]) -> str:
+        
+    def execute_agent(self, agent_id: str, agent_profile_id: str, execution_data: Dict[str, Any]) -> str: 
         """
         Execute an agent with the provided parameters.
         
         Args:
             agent_id: The ID of the agent to execute
+            agent_profile_id: The ID of the agent profile
             execution_data: The execution parameters
             
         Returns:
@@ -72,10 +74,11 @@ class AsteroidClient:
             Exception: If the execution request fails
             
         Example:
-            execution_id = client.execute_agent('my-agent-id', {'input': 'some dynamic value'})
+            execution_id = client.execute_structured_agent('my-agent-id', 'agent-profile-id', {'input': 'some dynamic value'})
         """
+        req = StructuredAgentExecutionRequest(agent_profile_id=agent_profile_id, dynamic_data=execution_data)
         try:
-            response = self.sdk_api.execute_agent(agent_id, execution_data)
+            response = self.sdk_api.execute_agent_structured(agent_id, req)
             return response.execution_id
         except ApiException as e:
             raise Exception(f"Failed to execute agent: {e}")
@@ -299,14 +302,14 @@ def create_client(api_key: str, base_url: Optional[str] = None) -> AsteroidClien
     """
     return AsteroidClient(api_key, base_url)
 
-
-def execute_agent(client: AsteroidClient, agent_id: str, execution_data: Dict[str, Any]) -> str:
+def execute_agent(client: AsteroidClient, agent_id: str, agent_profile_id: str, execution_data: Dict[str, Any]) -> str:
     """
     Execute an agent with the provided parameters.
     
     Args:
         client: The AsteroidClient instance
         agent_id: The ID of the agent to execute
+        agent_profile_id: The ID of the agent profile
         execution_data: The execution parameters
         
     Returns:
@@ -315,7 +318,8 @@ def execute_agent(client: AsteroidClient, agent_id: str, execution_data: Dict[st
     Example:
         execution_id = execute_agent(client, 'my-agent-id', {'input': 'some dynamic value'})
     """
-    return client.execute_agent(agent_id, execution_data)
+    return client.execute_agent(agent_id, agent_profile_id, execution_data)
+
 
 
 def get_execution_status(client: AsteroidClient, execution_id: str) -> ExecutionStatusResponse:

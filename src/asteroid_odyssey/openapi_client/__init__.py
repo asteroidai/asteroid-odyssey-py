@@ -39,6 +39,7 @@ __all__ = [
     "HealthCheck200Response",
     "HealthCheck500Response",
     "Status",
+    "StructuredAgentExecutionRequest",
     "UploadExecutionFiles200Response",
 ]
 
@@ -68,4 +69,5 @@ from openapi_client.models.execution_status_response import ExecutionStatusRespo
 from openapi_client.models.health_check200_response import HealthCheck200Response as HealthCheck200Response
 from openapi_client.models.health_check500_response import HealthCheck500Response as HealthCheck500Response
 from openapi_client.models.status import Status as Status
+from openapi_client.models.structured_agent_execution_request import StructuredAgentExecutionRequest as StructuredAgentExecutionRequest
 from openapi_client.models.upload_execution_files200_response import UploadExecutionFiles200Response as UploadExecutionFiles200Response
