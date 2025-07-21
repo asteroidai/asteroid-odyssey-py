@@ -44,30 +44,30 @@ __all__ = [
 ]
 
 # import apis into sdk package
-from openapi_client.api.api_api import APIApi as APIApi
-from openapi_client.api.execution_api import ExecutionApi as ExecutionApi
-from openapi_client.api.sdk_api import SDKApi as SDKApi
+from asteroid_odyssey.openapi_client.api.api_api import APIApi as APIApi
+from asteroid_odyssey.openapi_client.api.execution_api import ExecutionApi as ExecutionApi
+from asteroid_odyssey.openapi_client.api.sdk_api import SDKApi as SDKApi
 
 # import ApiClient
-from openapi_client.api_response import ApiResponse as ApiResponse
-from openapi_client.api_client import ApiClient as ApiClient
-from openapi_client.configuration import Configuration as Configuration
-from openapi_client.exceptions import OpenApiException as OpenApiException
-from openapi_client.exceptions import ApiTypeError as ApiTypeError
-from openapi_client.exceptions import ApiValueError as ApiValueError
-from openapi_client.exceptions import ApiKeyError as ApiKeyError
-from openapi_client.exceptions import ApiAttributeError as ApiAttributeError
-from openapi_client.exceptions import ApiException as ApiException
+from asteroid_odyssey.openapi_client.api_response import ApiResponse as ApiResponse
+from asteroid_odyssey.openapi_client.api_client import ApiClient as ApiClient
+from asteroid_odyssey.openapi_client.configuration import Configuration as Configuration
+from asteroid_odyssey.openapi_client.exceptions import OpenApiException as OpenApiException
+from asteroid_odyssey.openapi_client.exceptions import ApiTypeError as ApiTypeError
+from asteroid_odyssey.openapi_client.exceptions import ApiValueError as ApiValueError
+from asteroid_odyssey.openapi_client.exceptions import ApiKeyError as ApiKeyError
+from asteroid_odyssey.openapi_client.exceptions import ApiAttributeError as ApiAttributeError
+from asteroid_odyssey.openapi_client.exceptions import ApiException as ApiException
 
 # import models into sdk package
-from openapi_client.models.browser_session_recording_response import BrowserSessionRecordingResponse as BrowserSessionRecordingResponse
-from openapi_client.models.error_response import ErrorResponse as ErrorResponse
-from openapi_client.models.execution_response import ExecutionResponse as ExecutionResponse
-from openapi_client.models.execution_result import ExecutionResult as ExecutionResult
-from openapi_client.models.execution_result_response import ExecutionResultResponse as ExecutionResultResponse
-from openapi_client.models.execution_status_response import ExecutionStatusResponse as ExecutionStatusResponse
-from openapi_client.models.health_check200_response import HealthCheck200Response as HealthCheck200Response
-from openapi_client.models.health_check500_response import HealthCheck500Response as HealthCheck500Response
-from openapi_client.models.status import Status as Status
-from openapi_client.models.structured_agent_execution_request import StructuredAgentExecutionRequest as StructuredAgentExecutionRequest
-from openapi_client.models.upload_execution_files200_response import UploadExecutionFiles200Response as UploadExecutionFiles200Response
+from asteroid_odyssey.openapi_client.models.browser_session_recording_response import BrowserSessionRecordingResponse as BrowserSessionRecordingResponse
+from asteroid_odyssey.openapi_client.models.error_response import ErrorResponse as ErrorResponse
+from asteroid_odyssey.openapi_client.models.execution_response import ExecutionResponse as ExecutionResponse
+from asteroid_odyssey.openapi_client.models.execution_result import ExecutionResult as ExecutionResult
+from asteroid_odyssey.openapi_client.models.execution_result_response import ExecutionResultResponse as ExecutionResultResponse
+from asteroid_odyssey.openapi_client.models.execution_status_response import ExecutionStatusResponse as ExecutionStatusResponse
+from asteroid_odyssey.openapi_client.models.health_check200_response import HealthCheck200Response as HealthCheck200Response
+from asteroid_odyssey.openapi_client.models.health_check500_response import HealthCheck500Response as HealthCheck500Response
+from asteroid_odyssey.openapi_client.models.status import Status as Status
+from asteroid_odyssey.openapi_client.models.structured_agent_execution_request import StructuredAgentExecutionRequest as StructuredAgentExecutionRequest
+from asteroid_odyssey.openapi_client.models.upload_execution_files200_response import UploadExecutionFiles200Response as UploadExecutionFiles200Response

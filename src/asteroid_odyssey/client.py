@@ -11,7 +11,7 @@ without modifying any generated files.
 import time
 import os
 from typing import Dict, Any, Optional, List, Union, Tuple
-from openapi_client import (
+from .openapi_client import (
     Configuration,
     ApiClient,
     SDKApi,
@@ -23,7 +23,7 @@ from openapi_client import (
     Status,
     StructuredAgentExecutionRequest
 )
-from openapi_client.exceptions import ApiException
+from .openapi_client.exceptions import ApiException
 
 
 class AsteroidClient:
@@ -58,7 +58,7 @@ class AsteroidClient:
         self.sdk_api = SDKApi(self.api_client)
         self.execution_api = ExecutionApi(self.api_client)
         
-    def execute_agent(self, agent_id: str, agent_profile_id: str, execution_data: Dict[str, Any]) -> str: 
+    def execute_agent(self, agent_id: str, execution_data: Dict[str, Any]) -> str: 
         """
         Execute an agent with the provided parameters.
         
@@ -76,7 +76,7 @@ class AsteroidClient:
         Example:
             execution_id = client.execute_structured_agent('my-agent-id', 'agent-profile-id', {'input': 'some dynamic value'})
         """
-        req = StructuredAgentExecutionRequest(agent_profile_id=agent_profile_id, dynamic_data=execution_data)
+        req = StructuredAgentExecutionRequest(dynamic_data=execution_data)
         try:
             response = self.sdk_api.execute_agent_structured(agent_id, req)
             return response.execution_id

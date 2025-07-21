@@ -19,15 +19,15 @@ from typing_extensions import Annotated
 from pydantic import Field, StrictStr
 from typing import Any, Dict
 from typing_extensions import Annotated
-from openapi_client.models.browser_session_recording_response import BrowserSessionRecordingResponse
-from openapi_client.models.execution_response import ExecutionResponse
-from openapi_client.models.execution_result_response import ExecutionResultResponse
-from openapi_client.models.execution_status_response import ExecutionStatusResponse
-from openapi_client.models.structured_agent_execution_request import StructuredAgentExecutionRequest
+from asteroid_odyssey.openapi_client.models.browser_session_recording_response import BrowserSessionRecordingResponse
+from asteroid_odyssey.openapi_client.models.execution_response import ExecutionResponse
+from asteroid_odyssey.openapi_client.models.execution_result_response import ExecutionResultResponse
+from asteroid_odyssey.openapi_client.models.execution_status_response import ExecutionStatusResponse
+from asteroid_odyssey.openapi_client.models.structured_agent_execution_request import StructuredAgentExecutionRequest
 
-from openapi_client.api_client import ApiClient, RequestSerialized
-from openapi_client.api_response import ApiResponse
-from openapi_client.rest import RESTResponseType
+from asteroid_odyssey.openapi_client.api_client import ApiClient, RequestSerialized
+from asteroid_odyssey.openapi_client.api_response import ApiResponse
+from asteroid_odyssey.openapi_client.rest import RESTResponseType
 
 
 class SDKApi:

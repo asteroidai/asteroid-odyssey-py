@@ -14,7 +14,7 @@
 
 import unittest
 
-from openapi_client.models.execution_result_response import ExecutionResultResponse
+from asteroid_odyssey.openapi_client.models.execution_result_response import ExecutionResultResponse
 
 class TestExecutionResultResponse(unittest.TestCase):
     """ExecutionResultResponse unit test stubs"""
@@ -39,7 +39,7 @@ class TestExecutionResultResponse(unittest.TestCase):
                 status = 'starting',
                 result = { },
                 error = '',
-                execution_result = openapi_client.models.execution_result.ExecutionResult(
+                execution_result = asteroid_odyssey.openapi_client.models.execution_result.ExecutionResult(
                     outcome = 'success', 
                     reasoning = '', 
                     result = { }, )

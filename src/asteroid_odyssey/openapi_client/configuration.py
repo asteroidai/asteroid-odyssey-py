@@ -177,7 +177,7 @@ class Configuration:
 
     You can programmatically set the cookie:
 
-conf = openapi_client.Configuration(
+conf = asteroid_odyssey.openapi_client.Configuration(
     api_key={'cookieAuth': 'abc123'}
     api_key_prefix={'cookieAuth': 'JSESSIONID'}
 )
@@ -252,7 +252,7 @@ conf = openapi_client.Configuration(
         self.logger = {}
         """Logging Settings
         """
-        self.logger["package_logger"] = logging.getLogger("openapi_client")
+        self.logger["package_logger"] = logging.getLogger("asteroid_odyssey.openapi_client")
         self.logger["urllib3_logger"] = logging.getLogger("urllib3")
         self.logger_format = '%(asctime)s %(levelname)s %(message)s'
         """Log format
