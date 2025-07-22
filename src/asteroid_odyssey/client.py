@@ -10,8 +10,9 @@ without modifying any generated files.
 
 import time
 import os
+import logging
 from typing import Dict, Any, Optional, List, Union, Tuple
-from openapi_client import (
+from .openapi_client import (
     Configuration,
     ApiClient,
     SDKApi,
@@ -23,7 +24,7 @@ from openapi_client import (
     Status,
     StructuredAgentExecutionRequest
 )
-from openapi_client.exceptions import ApiException
+from .openapi_client.exceptions import ApiException
 
 
 class AsteroidClient:
@@ -58,7 +59,7 @@ class AsteroidClient:
         self.sdk_api = SDKApi(self.api_client)
         self.execution_api = ExecutionApi(self.api_client)
         
-    def execute_agent(self, agent_id: str, agent_profile_id: str, execution_data: Dict[str, Any]) -> str: 
+    def execute_agent(self, agent_id: str, execution_data: Dict[str, Any]) -> str: 
         """
         Execute an agent with the provided parameters.
         
@@ -74,9 +75,9 @@ class AsteroidClient:
             Exception: If the execution request fails
             
         Example:
-            execution_id = client.execute_structured_agent('my-agent-id', 'agent-profile-id', {'input': 'some dynamic value'})
+            execution_id = client.execute_agent('my-agent-id', 'agent-profile-id', {'input': 'some dynamic value'})
         """
-        req = StructuredAgentExecutionRequest(agent_profile_id=agent_profile_id, dynamic_data=execution_data)
+        req = StructuredAgentExecutionRequest(dynamic_data=execution_data)
         try:
             response = self.sdk_api.execute_agent_structured(agent_id, req)
             return response.execution_id
@@ -278,9 +279,23 @@ class AsteroidClient:
         """Context manager entry."""
         return self
     
-    def __exit__(self, exc_type, exc_value, traceback):
-        """Context manager exit."""
-        pass
+    def __exit__(self, exc_type, exc_value, tb):
+        """Context manager exit: clean up API client connection pool."""
+        try:
+            # Try to grab the pool_manager; if any attr is missing, skip
+            try:
+                pool_manager = self.api_client.rest_client.pool_manager
+            except AttributeError:
+                pool_manager = None
+
+            if pool_manager:
+                pool_manager.clear()
+        except Exception as e:
+            # Log but don't mask the original exception (if any)
+            logging.warning("Failed to clear connection pool: %s", e)
+
+        # Returning False allows any exception in the 'with' block to propagate
+        return False
 
 
 # Convenience functions that mirror the TypeScript SDK pattern

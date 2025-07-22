@@ -14,7 +14,7 @@
 
 import unittest
 
-from openapi_client.models.upload_execution_files200_response import UploadExecutionFiles200Response
+from asteroid_odyssey.openapi_client.models.upload_execution_files200_response import UploadExecutionFiles200Response
 
 class TestUploadExecutionFiles200Response(unittest.TestCase):
     """UploadExecutionFiles200Response unit test stubs"""

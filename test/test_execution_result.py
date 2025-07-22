@@ -14,7 +14,7 @@
 
 import unittest
 
-from openapi_client.models.execution_result import ExecutionResult
+from asteroid_odyssey.openapi_client.models.execution_result import ExecutionResult
 
 class TestExecutionResult(unittest.TestCase):
     """ExecutionResult unit test stubs"""

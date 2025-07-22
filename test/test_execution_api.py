@@ -14,7 +14,7 @@
 
 import unittest
 
-from openapi_client.api.execution_api import ExecutionApi
+from asteroid_odyssey.openapi_client.api.execution_api import ExecutionApi
 
 
 class TestExecutionApi(unittest.TestCase):

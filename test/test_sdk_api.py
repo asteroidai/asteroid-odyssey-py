@@ -14,7 +14,7 @@
 
 import unittest
 
-from openapi_client.api.sdk_api import SDKApi
+from asteroid_odyssey.openapi_client.api.sdk_api import SDKApi
 
 
 class TestSDKApi(unittest.TestCase):
@@ -30,6 +30,13 @@ class TestSDKApi(unittest.TestCase):
         """Test case for execute_agent
 
         Execute an agent
+        """
+        pass
+
+    def test_execute_agent_structured(self) -> None:
+        """Test case for execute_agent_structured
+
+        Execute an agent with structured parameters
         """
         pass
 

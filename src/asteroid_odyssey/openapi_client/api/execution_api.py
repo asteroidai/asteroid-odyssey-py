@@ -19,11 +19,11 @@ from typing_extensions import Annotated
 from pydantic import Field, StrictBytes, StrictStr
 from typing import List, Optional, Tuple, Union
 from typing_extensions import Annotated
-from openapi_client.models.upload_execution_files200_response import UploadExecutionFiles200Response
+from asteroid_odyssey.openapi_client.models.upload_execution_files200_response import UploadExecutionFiles200Response
 
-from openapi_client.api_client import ApiClient, RequestSerialized
-from openapi_client.api_response import ApiResponse
-from openapi_client.rest import RESTResponseType
+from asteroid_odyssey.openapi_client.api_client import ApiClient, RequestSerialized
+from asteroid_odyssey.openapi_client.api_response import ApiResponse
+from asteroid_odyssey.openapi_client.rest import RESTResponseType
 
 
 class ExecutionApi:

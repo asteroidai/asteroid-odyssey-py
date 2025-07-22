@@ -14,7 +14,7 @@
 
 import unittest
 
-from openapi_client.models.browser_session_recording_response import BrowserSessionRecordingResponse
+from asteroid_odyssey.openapi_client.models.browser_session_recording_response import BrowserSessionRecordingResponse
 
 class TestBrowserSessionRecordingResponse(unittest.TestCase):
     """BrowserSessionRecordingResponse unit test stubs"""

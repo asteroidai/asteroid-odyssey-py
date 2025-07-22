@@ -14,7 +14,7 @@
 
 import unittest
 
-from openapi_client.models.health_check200_response import HealthCheck200Response
+from asteroid_odyssey.openapi_client.models.health_check200_response import HealthCheck200Response
 
 class TestHealthCheck200Response(unittest.TestCase):
     """HealthCheck200Response unit test stubs"""

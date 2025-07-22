@@ -14,7 +14,7 @@
 
 import unittest
 
-from openapi_client.models.execution_status_response import ExecutionStatusResponse
+from asteroid_odyssey.openapi_client.models.execution_status_response import ExecutionStatusResponse
 
 class TestExecutionStatusResponse(unittest.TestCase):
     """ExecutionStatusResponse unit test stubs"""

@@ -32,7 +32,7 @@ class Status(str, Enum):
     COMPLETED = 'completed'
     CANCELLED = 'cancelled'
     FAILED = 'failed'
-    AWAITING_COMPLETION = 'awaiting_completion'
+    AWAITING_CONFIRMATION = 'awaiting_confirmation'
     PAUSED_BY_AGENT = 'paused_by_agent'
 
     @classmethod
