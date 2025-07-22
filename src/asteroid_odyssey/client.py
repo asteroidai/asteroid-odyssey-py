@@ -10,6 +10,7 @@ without modifying any generated files.
 
 import time
 import os
+import logging
 from typing import Dict, Any, Optional, List, Union, Tuple
 from .openapi_client import (
     Configuration,
@@ -74,7 +75,7 @@ class AsteroidClient:
             Exception: If the execution request fails
             
         Example:
-            execution_id = client.execute_structured_agent('my-agent-id', 'agent-profile-id', {'input': 'some dynamic value'})
+            execution_id = client.execute_agent('my-agent-id', 'agent-profile-id', {'input': 'some dynamic value'})
         """
         req = StructuredAgentExecutionRequest(dynamic_data=execution_data)
         try:
@@ -278,9 +279,23 @@ class AsteroidClient:
         """Context manager entry."""
         return self
     
-    def __exit__(self, exc_type, exc_value, traceback):
-        """Context manager exit."""
-        pass
+    def __exit__(self, exc_type, exc_value, tb):
+        """Context manager exit: clean up API client connection pool."""
+        try:
+            # Try to grab the pool_manager; if any attr is missing, skip
+            try:
+                pool_manager = self.api_client.rest_client.pool_manager
+            except AttributeError:
+                pool_manager = None
+
+            if pool_manager:
+                pool_manager.clear()
+        except Exception as e:
+            # Log but don't mask the original exception (if any)
+            logging.warning("Failed to clear connection pool: %s", e)
+
+        # Returning False allows any exception in the 'with' block to propagate
+        return False
 
 
 # Convenience functions that mirror the TypeScript SDK pattern
