@@ -58,14 +58,14 @@ class AsteroidClient:
         self.sdk_api = SDKApi(self.api_client)
         self.execution_api = ExecutionApi(self.api_client)
         
-    def execute_agent(self, agent_id: str, agent_profile_id: str, execution_data: Dict[str, Any]) -> str: 
+    def execute_agent(self, agent_id: str, execution_data: Dict[str, Any], agent_profile_id: Optional[str] = None) -> str:
         """
         Execute an agent with the provided parameters.
         
         Args:
             agent_id: The ID of the agent to execute
-            agent_profile_id: The ID of the agent profile
             execution_data: The execution parameters
+            agent_profile_id: Optional ID of the agent profile
             
         Returns:
             The execution ID
@@ -74,9 +74,12 @@ class AsteroidClient:
             Exception: If the execution request fails
             
         Example:
-            execution_id = client.execute_structured_agent('my-agent-id', 'agent-profile-id', {'input': 'some dynamic value'})
+            execution_id = client.execute_agent('my-agent-id', {'input': 'some dynamic value'}, 'agent-profile-id')
         """
-        req = StructuredAgentExecutionRequest(agent_profile_id=agent_profile_id, dynamic_data=execution_data)
+        req = StructuredAgentExecutionRequest(
+            dynamic_data=execution_data,
+            agent_profile_id=agent_profile_id
+        )
         try:
             response = self.sdk_api.execute_agent_structured(agent_id, req)
             return response.execution_id
@@ -302,23 +305,23 @@ def create_client(api_key: str, base_url: Optional[str] = None) -> AsteroidClien
     """
     return AsteroidClient(api_key, base_url)
 
-def execute_agent(client: AsteroidClient, agent_id: str, agent_profile_id: str, execution_data: Dict[str, Any]) -> str:
+def execute_agent(client: AsteroidClient, agent_id: str, execution_data: Dict[str, Any], agent_profile_id: Optional[str] = None) -> str:
     """
     Execute an agent with the provided parameters.
     
     Args:
         client: The AsteroidClient instance
         agent_id: The ID of the agent to execute
-        agent_profile_id: The ID of the agent profile
         execution_data: The execution parameters
+        agent_profile_id: Optional ID of the agent profile
         
     Returns:
         The execution ID
         
     Example:
-        execution_id = execute_agent(client, 'my-agent-id', {'input': 'some dynamic value'})
+        execution_id = execute_agent(client, 'my-agent-id', {'input': 'some dynamic value'}, 'agent-profile-id')
     """
-    return client.execute_agent(agent_id, agent_profile_id, execution_data)
+    return client.execute_agent(agent_id, execution_data, agent_profile_id)
 
 
 
