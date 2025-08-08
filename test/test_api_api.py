@@ -14,7 +14,7 @@
 
 import unittest
 
-from openapi_client.api.api_api import APIApi
+from asteroid_odyssey.openapi_client.api.api_api import APIApi
 
 
 class TestAPIApi(unittest.TestCase):
