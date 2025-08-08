@@ -20,7 +20,6 @@ __version__ = "1.0.0"
 __all__ = [
     "APIApi",
     "ExecutionApi",
-    "SDKApi",
     "ApiResponse",
     "ApiClient",
     "Configuration",
@@ -46,7 +45,6 @@ __all__ = [
 # import apis into sdk package
 from asteroid_odyssey.openapi_client.api.api_api import APIApi as APIApi
 from asteroid_odyssey.openapi_client.api.execution_api import ExecutionApi as ExecutionApi
-from asteroid_odyssey.openapi_client.api.sdk_api import SDKApi as SDKApi
 
 # import ApiClient
 from asteroid_odyssey.openapi_client.api_response import ApiResponse as ApiResponse
