@@ -26,6 +26,41 @@ class TestExecutionApi(unittest.TestCase):
     def tearDown(self) -> None:
         pass
 
+    def test_execute_agent(self) -> None:
+        """Test case for execute_agent
+
+        Execute an agent
+        """
+        pass
+
+    def test_execute_agent_structured(self) -> None:
+        """Test case for execute_agent_structured
+
+        Execute an agent with structured parameters
+        """
+        pass
+
+    def test_get_browser_session_recording(self) -> None:
+        """Test case for get_browser_session_recording
+
+        Get browser session recording
+        """
+        pass
+
+    def test_get_execution_result(self) -> None:
+        """Test case for get_execution_result
+
+        Get execution result
+        """
+        pass
+
+    def test_get_execution_status(self) -> None:
+        """Test case for get_execution_status
+
+        Get execution status
+        """
+        pass
+
     def test_upload_execution_files(self) -> None:
         """Test case for upload_execution_files
 
