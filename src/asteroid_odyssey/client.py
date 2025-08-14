@@ -11,20 +11,68 @@ without modifying any generated files.
 import time
 import os
 import logging
+import base64
 from typing import Dict, Any, Optional, List, Union, Tuple
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from .openapi_client import (
     Configuration,
     ApiClient,
     APIApi,
     ExecutionApi,
+    AgentProfileApi,
     ExecutionStatusResponse,
     ExecutionResultResponse,
     BrowserSessionRecordingResponse,
     UploadExecutionFiles200Response,
     Status,
-    StructuredAgentExecutionRequest
+    StructuredAgentExecutionRequest,
+    CreateAgentProfileRequest,
+    UpdateAgentProfileRequest,
+    DeleteAgentProfile200Response,
+    AgentProfile,
+    CountryCode,
+    ProxyType,
+    Credential, 
 )
 from .openapi_client.exceptions import ApiException
+
+
+def encrypt_with_public_key(plaintext: str, pem_public_key: str) -> str:
+    """
+    Encrypt plaintext using RSA public key with PKCS1v15 padding.
+    
+    Args:
+        plaintext: The string to encrypt
+        pem_public_key: PEM-formatted RSA public key
+        
+    Returns:
+        Base64-encoded encrypted string
+        
+    Raises:
+        ValueError: If encryption fails or key is invalid
+        
+    Example:
+        encrypted = encrypt_with_public_key("my_password", public_key_pem)
+    """
+    try:
+        # Load the PEM public key (matches node-forge behavior)
+        public_key = serialization.load_pem_public_key(pem_public_key.encode('utf-8'))
+        
+        if not isinstance(public_key, rsa.RSAPublicKey):
+            raise ValueError("Invalid RSA public key")
+        
+        # Encrypt using PKCS1v15 padding (matches "RSAES-PKCS1-V1_5" from TypeScript)
+        encrypted_bytes = public_key.encrypt(
+            plaintext.encode('utf-8'),
+            padding.PKCS1v15()
+        )
+        
+        # Encode as base64 (matches forge.util.encode64)
+        return base64.b64encode(encrypted_bytes).decode('utf-8')
+        
+    except Exception as e:
+        raise ValueError(f"Failed to encrypt: {str(e)}") from e
 
 
 class AsteroidClient:
@@ -58,7 +106,7 @@ class AsteroidClient:
         self.api_client = ApiClient(config)
         self.api_api = APIApi(self.api_client)
         self.execution_api = ExecutionApi(self.api_client)
-        
+        self.agent_profile_api = AgentProfileApi(self.api_client)
     def execute_agent(self, agent_id: str, execution_data: Dict[str, Any], agent_profile_id: Optional[str] = None) -> str: 
         """
         Execute an agent with the provided parameters.
@@ -275,6 +323,193 @@ class AsteroidClient:
         except ApiException as e:
             raise Exception(f"Failed to get browser session recording: {e}")
     
+    def get_agent_profiles(self, organization_id: str) -> List[AgentProfile]:
+        """
+        Get a list of agent profiles for a specific organization.
+        
+        Args:
+            organization_id: The organization identifier (required)
+        Returns:
+            A list of agent profiles
+        Raises:
+            Exception: If the agent profiles request fails
+        Example:
+            profiles = client.get_agent_profiles("org-123")
+        """
+        try:
+            response = self.agent_profile_api.get_agent_profiles(organization_id=organization_id)
+            return response  # response is already a List[AgentProfile]
+        except ApiException as e:
+            raise Exception(f"Failed to get agent profiles: {e}")
+    def get_agent_profile(self, profile_id: str) -> AgentProfile:
+        """
+        Get an agent profile by ID.
+        Args:
+            profile_id: The ID of the agent profile
+        Returns:
+            The agent profile
+        Raises:
+            Exception: If the agent profile request fails
+        Example:
+            profile = client.get_agent_profile("profile_id")
+        """
+        try:
+            response = self.agent_profile_api.get_agent_profile(profile_id)
+            return response
+        except ApiException as e:
+            raise Exception(f"Failed to get agent profile: {e}")
+
+    def create_agent_profile(self, request: CreateAgentProfileRequest) -> AgentProfile:
+        """
+        Create an agent profile with automatic credential encryption.
+        
+        Args:
+            request: The request object
+        Returns:
+            The agent profile
+        Raises:
+            Exception: If the agent profile creation fails
+        Example:
+            request = CreateAgentProfileRequest(
+                name="My Agent Profile",
+                description="This is my agent profile",
+                organization_id="org-123",
+                proxy_cc=CountryCode.US,
+                proxy_type=ProxyType.RESIDENTIAL,
+                captcha_solver_active=True,
+                sticky_ip=True,
+                credentials=[Credential(name="user", data="password")]
+            )
+            profile = client.create_agent_profile(request)
+        """
+        try:
+            # Create a copy to avoid modifying the original request
+            processed_request = request
+            
+            # If credentials are provided, encrypt them before sending
+            if request.credentials and len(request.credentials) > 0:
+                # Get the public key for encryption
+                public_key = self.get_credentials_public_key()
+                
+                # Encrypt each credential's data field
+                encrypted_credentials = []
+                for credential in request.credentials:
+                    encrypted_credential = Credential(
+                        name=credential.name,
+                        data=encrypt_with_public_key(credential.data, public_key),
+                        id=credential.id,
+                        created_at=credential.created_at
+                    )
+                    encrypted_credentials.append(encrypted_credential)
+                
+                # Create new request with encrypted credentials
+                processed_request = CreateAgentProfileRequest(
+                    name=request.name,
+                    description=request.description,
+                    organization_id=request.organization_id,
+                    proxy_cc=request.proxy_cc,
+                    proxy_type=request.proxy_type,
+                    captcha_solver_active=request.captcha_solver_active,
+                    sticky_ip=request.sticky_ip,
+                    credentials=encrypted_credentials
+                )
+            
+            response = self.agent_profile_api.create_agent_profile(processed_request)
+            return response
+        except ApiException as e:
+            raise Exception(f"Failed to create agent profile: {e}")
+    def update_agent_profile(self, profile_id: str, request: UpdateAgentProfileRequest) -> AgentProfile:
+        """
+        Update an agent profile with automatic credential encryption.
+        
+        Args:
+            profile_id: The ID of the agent profile
+            request: The request object
+        Returns:
+            The agent profile
+        Raises: 
+            Exception: If the agent profile update fails
+        Example:
+            request = UpdateAgentProfileRequest(
+                name="My Agent Profile",
+                description="This is my agent profile",
+                credentials_to_add=[Credential(name="api_key", data="secret")]
+            )   
+            profile = client.update_agent_profile("profile_id", request)
+        """
+        try:
+            # Create a copy to avoid modifying the original request
+            processed_request = request
+            
+            # If credentials_to_add are provided, encrypt them before sending
+            if request.credentials_to_add and len(request.credentials_to_add) > 0:
+                # Get the public key for encryption
+                public_key = self.get_credentials_public_key()
+                
+                # Encrypt the data field of each credential to add
+                encrypted_credentials_to_add = []
+                for credential in request.credentials_to_add:
+                    encrypted_credential = Credential(
+                        name=credential.name,
+                        data=encrypt_with_public_key(credential.data, public_key),
+                        id=credential.id,
+                        created_at=credential.created_at
+                    )
+                    encrypted_credentials_to_add.append(encrypted_credential)
+                
+                # Create new request with encrypted credentials
+                processed_request = UpdateAgentProfileRequest(
+                    name=request.name,
+                    description=request.description,
+                    proxy_cc=request.proxy_cc,
+                    proxy_type=request.proxy_type,
+                    captcha_solver_active=request.captcha_solver_active,
+                    sticky_ip=request.sticky_ip,
+                    credentials_to_add=encrypted_credentials_to_add,
+                    credentials_to_delete=request.credentials_to_delete
+                )
+            
+            response = self.agent_profile_api.update_agent_profile(profile_id, processed_request)
+            return response
+        except ApiException as e:
+            raise Exception(f"Failed to update agent profile: {e}")
+    def delete_agent_profile(self, profile_id: str) -> DeleteAgentProfile200Response:
+        """
+        Delete an agent profile.
+        Args:
+            profile_id: The ID of the agent profile
+        Returns:
+            Confirmation message from the server
+        Raises:
+            Exception: If the agent profile deletion fails
+        Example:
+            response = client.delete_agent_profile("profile_id")
+        """
+        try:
+            response = self.agent_profile_api.delete_agent_profile(profile_id)
+            return response
+        except ApiException as e:
+            raise Exception(f"Failed to delete agent profile: {e}")
+
+    def get_credentials_public_key(self) -> str:
+        """
+        Get the public key for encrypting credentials.
+        
+        Returns:
+            PEM-formatted RSA public key string
+            
+        Raises:
+            Exception: If the public key request fails
+            
+        Example:
+            public_key = client.get_credentials_public_key()
+        """
+        try:
+            response = self.agent_profile_api.get_credentials_public_key()
+            return response
+        except ApiException as e:
+            raise Exception(f"Failed to get credentials public key: {e}")
+
     def __enter__(self):
         """Context manager entry."""
         return self
@@ -296,6 +531,33 @@ class AsteroidClient:
 
         # Returning False allows any exception in the 'with' block to propagate
         return False
+    
+    # Utility methods for nicer response formatting
+    def format_agent_profile(self, profile: AgentProfile) -> str:
+        """Format an agent profile for nice display."""
+        credentials_info = f"{[(credential.name, credential.id) for credential in profile.credentials]}" if profile.credentials else "No credentials"
+        return f"""Agent Profile:
+  ID: {profile.id}
+  Name: {profile.name}
+  Description: {profile.description}
+  Organization: {profile.organization_id}
+  Proxy: {profile.proxy_cc.value} ({profile.proxy_type.value})
+  Captcha Solver: {'Enabled' if profile.captcha_solver_active else 'Disabled'}
+  Sticky IP: {'Yes' if profile.sticky_ip else 'No'}
+  Credentials: {credentials_info}
+  Created: {profile.created_at.strftime('%Y-%m-%d %H:%M:%S')}
+  Updated: {profile.updated_at.strftime('%Y-%m-%d %H:%M:%S')}"""
+
+    def format_agent_profiles_list(self, profiles: List[AgentProfile]) -> str:
+        """Format a list of agent profiles for nice display."""
+        if not profiles:
+            return "No agent profiles found."
+        
+        result = f"Found {len(profiles)} agent profile(s):\n"
+        for i, profile in enumerate(profiles, 1):
+            credentials_count = len(profile.credentials) if profile.credentials else 0
+            result += f"  {i}. {profile.name} (ID: {profile.id[:8]}...) - {credentials_count} credentials\n"
+        return result.rstrip()
 
 
 # Convenience functions that mirror the TypeScript SDK pattern
@@ -445,6 +707,107 @@ def get_browser_session_recording(client: AsteroidClient, execution_id: str) -> 
     """
     return client.get_browser_session_recording(execution_id)
 
+def get_agent_profiles(client: AsteroidClient, organization_id: Optional[str] = None) -> List[AgentProfile]:
+    """
+    Get a list of agent profiles.
+    Args:
+        client: The AsteroidClient instance
+        organization_id: The organization identifier (optional) Returns all agent profiles if no organization_id is provided.
+    Returns:
+        A list of agent profiles
+    Raises:
+        Exception: If the agent profiles request fails
+    Example:
+        profiles = get_agent_profiles(client, "org-123")
+    """
+    return client.get_agent_profiles(organization_id)
+def get_agent_profile(client: AsteroidClient, profile_id: str) -> AgentProfile:
+    """
+    Get an agent profile by ID.
+    Args:
+        client: The AsteroidClient instance
+        profile_id: The ID of the agent profile
+    Returns:
+        The agent profile
+    Raises:
+        Exception: If the agent profile request fails
+    Example:
+        profile = get_agent_profile(client, "profile_id")
+    """
+    return client.get_agent_profile(profile_id)
+def create_agent_profile(client: AsteroidClient, request: CreateAgentProfileRequest) -> AgentProfile:
+    """
+    Create an agent profile.
+    Args:
+        client: The AsteroidClient instance
+        request: The request object
+    Returns:
+        The agent profile
+    Raises:
+        Exception: If the agent profile creation fails
+    Example:
+        request = CreateAgentProfileRequest(
+            name="My Agent Profile",
+            description="This is my agent profile",
+            organization_id="org-123",
+            proxy_cc=CountryCode.US,
+            proxy_type=ProxyType.RESIDENTIAL,
+            captcha_solver_active=True,
+            sticky_ip=True,
+            credentials=[Credential(name="user", data="password")]
+        )
+        profile = create_agent_profile(client, request)
+    """
+    return client.create_agent_profile(request)
+def update_agent_profile(client: AsteroidClient, profile_id: str, request: UpdateAgentProfileRequest) -> AgentProfile:
+    """
+    Update an agent profile with the provided request.
+    Args:
+        client: The AsteroidClient instance
+        profile_id: The ID of the agent profile
+        request: The request object
+    Returns:
+        The agent profile
+    Raises:
+        Exception: If the agent profile update fails
+    Example:
+        request = UpdateAgentProfileRequest(
+            name="My Agent Profile",
+            description="This is my agent profile",
+            organization_id="org-123",
+        )
+        profile = update_agent_profile(client, "profile_id", request)
+    """
+    return client.update_agent_profile(profile_id, request)
+def delete_agent_profile(client: AsteroidClient, profile_id: str) -> DeleteAgentProfile200Response:
+    """
+    Delete an agent profile.
+    Args:
+        client: The AsteroidClient instance
+        profile_id: The ID of the agent profile
+    Returns:
+        The agent profile
+    Raises:
+        Exception: If the agent profile deletion fails
+    Example:
+        profile_deleted =delete_agent_profile(client, "profile_id")
+    """
+    return client.delete_agent_profile(profile_id)
+
+def get_credentials_public_key(client: AsteroidClient) -> str:
+    """
+    Get the public key for encrypting credentials.
+    
+    Args:
+        client: The AsteroidClient instance
+        
+    Returns:
+        PEM-formatted RSA public key string
+        
+    Example:
+        public_key = get_credentials_public_key(client)
+    """
+    return client.get_credentials_public_key()
 
 # Re-export common types for convenience
 __all__ = [
@@ -455,5 +818,11 @@ __all__ = [
     'get_execution_result',
     'wait_for_execution_result',
     'upload_execution_files',
-    'get_browser_session_recording'
+    'get_browser_session_recording',
+    'get_agent_profiles',
+    'get_agent_profile',
+    'create_agent_profile',
+    'update_agent_profile',
+    'delete_agent_profile',
+    'get_credentials_public_key'
 ] 

@@ -14,7 +14,12 @@
 
 
 # import models into model package
+from asteroid_odyssey.openapi_client.models.agent_profile import AgentProfile
 from asteroid_odyssey.openapi_client.models.browser_session_recording_response import BrowserSessionRecordingResponse
+from asteroid_odyssey.openapi_client.models.country_code import CountryCode
+from asteroid_odyssey.openapi_client.models.create_agent_profile_request import CreateAgentProfileRequest
+from asteroid_odyssey.openapi_client.models.credential import Credential
+from asteroid_odyssey.openapi_client.models.delete_agent_profile200_response import DeleteAgentProfile200Response
 from asteroid_odyssey.openapi_client.models.error_response import ErrorResponse
 from asteroid_odyssey.openapi_client.models.execution_response import ExecutionResponse
 from asteroid_odyssey.openapi_client.models.execution_result import ExecutionResult
@@ -22,6 +27,8 @@ from asteroid_odyssey.openapi_client.models.execution_result_response import Exe
 from asteroid_odyssey.openapi_client.models.execution_status_response import ExecutionStatusResponse
 from asteroid_odyssey.openapi_client.models.health_check200_response import HealthCheck200Response
 from asteroid_odyssey.openapi_client.models.health_check500_response import HealthCheck500Response
+from asteroid_odyssey.openapi_client.models.proxy_type import ProxyType
 from asteroid_odyssey.openapi_client.models.status import Status
 from asteroid_odyssey.openapi_client.models.structured_agent_execution_request import StructuredAgentExecutionRequest
+from asteroid_odyssey.openapi_client.models.update_agent_profile_request import UpdateAgentProfileRequest
 from asteroid_odyssey.openapi_client.models.upload_execution_files200_response import UploadExecutionFiles200Response
