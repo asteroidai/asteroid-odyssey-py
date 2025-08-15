@@ -19,6 +19,7 @@ __version__ = "1.0.0"
 # Define package exports
 __all__ = [
     "APIApi",
+    "AgentProfileApi",
     "ExecutionApi",
     "ApiResponse",
     "ApiClient",
@@ -29,7 +30,12 @@ __all__ = [
     "ApiKeyError",
     "ApiAttributeError",
     "ApiException",
+    "AgentProfile",
     "BrowserSessionRecordingResponse",
+    "CountryCode",
+    "CreateAgentProfileRequest",
+    "Credential",
+    "DeleteAgentProfile200Response",
     "ErrorResponse",
     "ExecutionResponse",
     "ExecutionResult",
@@ -37,13 +43,16 @@ __all__ = [
     "ExecutionStatusResponse",
     "HealthCheck200Response",
     "HealthCheck500Response",
+    "ProxyType",
     "Status",
     "StructuredAgentExecutionRequest",
+    "UpdateAgentProfileRequest",
     "UploadExecutionFiles200Response",
 ]
 
 # import apis into sdk package
 from asteroid_odyssey.openapi_client.api.api_api import APIApi as APIApi
+from asteroid_odyssey.openapi_client.api.agent_profile_api import AgentProfileApi as AgentProfileApi
 from asteroid_odyssey.openapi_client.api.execution_api import ExecutionApi as ExecutionApi
 
 # import ApiClient
@@ -58,7 +67,12 @@ from asteroid_odyssey.openapi_client.exceptions import ApiAttributeError as ApiA
 from asteroid_odyssey.openapi_client.exceptions import ApiException as ApiException
 
 # import models into sdk package
+from asteroid_odyssey.openapi_client.models.agent_profile import AgentProfile as AgentProfile
 from asteroid_odyssey.openapi_client.models.browser_session_recording_response import BrowserSessionRecordingResponse as BrowserSessionRecordingResponse
+from asteroid_odyssey.openapi_client.models.country_code import CountryCode as CountryCode
+from asteroid_odyssey.openapi_client.models.create_agent_profile_request import CreateAgentProfileRequest as CreateAgentProfileRequest
+from asteroid_odyssey.openapi_client.models.credential import Credential as Credential
+from asteroid_odyssey.openapi_client.models.delete_agent_profile200_response import DeleteAgentProfile200Response as DeleteAgentProfile200Response
 from asteroid_odyssey.openapi_client.models.error_response import ErrorResponse as ErrorResponse
 from asteroid_odyssey.openapi_client.models.execution_response import ExecutionResponse as ExecutionResponse
 from asteroid_odyssey.openapi_client.models.execution_result import ExecutionResult as ExecutionResult
@@ -66,6 +80,8 @@ from asteroid_odyssey.openapi_client.models.execution_result_response import Exe
 from asteroid_odyssey.openapi_client.models.execution_status_response import ExecutionStatusResponse as ExecutionStatusResponse
 from asteroid_odyssey.openapi_client.models.health_check200_response import HealthCheck200Response as HealthCheck200Response
 from asteroid_odyssey.openapi_client.models.health_check500_response import HealthCheck500Response as HealthCheck500Response
+from asteroid_odyssey.openapi_client.models.proxy_type import ProxyType as ProxyType
 from asteroid_odyssey.openapi_client.models.status import Status as Status
 from asteroid_odyssey.openapi_client.models.structured_agent_execution_request import StructuredAgentExecutionRequest as StructuredAgentExecutionRequest
+from asteroid_odyssey.openapi_client.models.update_agent_profile_request import UpdateAgentProfileRequest as UpdateAgentProfileRequest
 from asteroid_odyssey.openapi_client.models.upload_execution_files200_response import UploadExecutionFiles200Response as UploadExecutionFiles200Response
