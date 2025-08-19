@@ -1,0 +1,98 @@
+name: Publish to PyPI
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env: 
+      DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+    
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          pip install -e .
+          pip install build twine
+
+      - name: Get git tag
+        id: get_tag
+        run: echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Ensure tag commit is on default branch
+        shell: bash
+        run: |
+          echo "Default branch is: ${{ env.DEFAULT_BRANCH }}"
+          git fetch origin ${{ env.DEFAULT_BRANCH }} --quiet
+          if git merge-base --is-ancestor "$GITHUB_SHA" origin/${{ env.DEFAULT_BRANCH }}; then
+            echo "Tag commit is on ${{ env.DEFAULT_BRANCH }} (ok)"
+          else
+            echo "Error: Tag ${{ steps.get_tag.outputs.TAG }} is not pointing to a commit on the ${{ env.DEFAULT_BRANCH }} branch."
+            exit 1
+          fi
+
+      - name: Derive version from tag and validate
+        id: derive_version
+        shell: bash
+        run: |
+          TAG="${{ steps.get_tag.outputs.TAG }}"
+          echo "Git tag: $TAG"
+
+          # Expect tags like v1.2.3 or v1.2.3-beta.1
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.]+)?$ ]]; then
+            echo "Error: Tag '$TAG' is not a valid semver tag (expected vMAJOR.MINOR.PATCH or pre-release)."
+            exit 1
+          fi
+
+          VERSION="${TAG#v}"
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Choose dist-tag
+        id: dist_tag
+        shell: bash
+        run: |
+          VERSION="${{ steps.derive_version.outputs.VERSION }}"
+          if [[ "$VERSION" == *-* ]]; then
+            echo "TAG=next" >> $GITHUB_OUTPUT
+            echo "Using dist-tag 'next' for prerelease version $VERSION"
+          else
+            echo "TAG=latest" >> $GITHUB_OUTPUT
+            echo "Using dist-tag 'latest' for release version $VERSION"
+          fi
+
+      - name: Update version in pyproject.toml
+        run: |
+          VERSION="${{ steps.derive_version.outputs.VERSION }}"
+          sed -i "s/^version = .*/version = \"$VERSION\"/" pyproject.toml
+          echo "Updated pyproject.toml version to $VERSION"
+
+      - name: Build
+        run: python -m build
+
+      - name: Upload to PyPI
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        run: python -m twine upload dist/* --verbose
+
+
