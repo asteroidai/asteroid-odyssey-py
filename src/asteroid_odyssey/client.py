@@ -22,6 +22,7 @@ from .agents_v1_gen import (
     ExecutionApi as AgentsV1ExecutionApi,
     AgentProfileApi as AgentsV1AgentProfileApi,
     ExecutionStatusResponse,
+    ExecutionResult,
     UploadExecutionFiles200Response,
     Status,
     StructuredAgentExecutionRequest,
@@ -39,6 +40,19 @@ from .agents_v2_gen import (
     ExecutionActivity,
     ExecutionUserMessagesAddTextBody,
 )
+
+
+class ExecutionError(Exception):
+    """Raised when an execution fails or is cancelled."""
+    def __init__(self, message: str, execution_result: Optional[ExecutionResult] = None):
+        super().__init__(message)
+        self.execution_result = execution_result
+
+
+class TimeoutError(Exception):
+    """Raised when an execution times out."""
+    def __init__(self, message: str):
+        super().__init__(message)
 
 
 def encrypt_with_public_key(plaintext: str, pem_public_key: str) -> str:
@@ -143,7 +157,7 @@ class AsteroidClient:
             response = self.execution_api.execute_agent_structured(agent_id, req)
             return response.execution_id
         except ApiException as e:
-            raise Exception(f"Failed to execute agent: {e}")
+            raise RuntimeError(f"Failed to execute agent: {e}")
 
     def get_execution_status(self, execution_id: str) -> ExecutionStatusResponse:
         """
@@ -167,7 +181,7 @@ class AsteroidClient:
         except ApiException as e:
             raise Exception(f"Failed to get execution status: {e}")
 
-    def get_execution_result(self, execution_id: str) -> Dict[str, Any]:
+    def get_execution_result(self, execution_id: str) -> ExecutionResult:
         """
         Get the final result of an execution.
 
@@ -175,14 +189,14 @@ class AsteroidClient:
             execution_id: The execution identifier
 
         Returns:
-            The result object of the execution
+            The execution result object
 
         Raises:
             Exception: If the result request fails or execution failed
 
         Example:
             result = client.get_execution_result(execution_id)
-            print(result)
+            print(result.outcome, result.reasoning)
         """
         try:
             response = self.execution_api.get_execution_result(execution_id)
@@ -190,16 +204,25 @@ class AsteroidClient:
             if response.error:
                 raise Exception(response.error)
 
-            return response.execution_result or {}
+            # Handle case where execution_result might be None or have invalid data
+            if response.execution_result is None:
+                raise Exception("Execution result is not available yet")
+            
+            return response.execution_result
         except ApiException as e:
             raise Exception(f"Failed to get execution result: {e}")
+        except Exception as e:
+            # Handle validation errors from ExecutionResult model
+            if "must be one of enum values" in str(e):
+                raise Exception("Execution result is not available yet - execution may still be running")
+            raise e
 
     def wait_for_execution_result(
         self,
         execution_id: str,
         interval: float = 1.0,
         timeout: float = 3600.0
-    ) -> Dict[str, Any]:
+    ) -> ExecutionResult:
         """
         Wait for an execution to reach a terminal state and return the result.
 
@@ -212,29 +235,48 @@ class AsteroidClient:
             timeout: Maximum wait time in seconds (default is 3600 - 1 hour)
 
         Returns:
-            The execution result if completed
+            The execution result object
 
         Raises:
-            Exception: If the execution ends as "cancelled" or "failed", or times out
+            TimeoutError: If the execution times out
+            ExecutionError: If the execution ends as "cancelled" or "failed"
 
         Example:
             result = client.wait_for_execution_result(execution_id, interval=2.0)
+            print(result.outcome, result.reasoning)
         """
         start_time = time.time()
 
         while True:
             elapsed_time = time.time() - start_time
             if elapsed_time >= timeout:
-                raise Exception(f"Execution {execution_id} timed out after {timeout}s")
+                raise TimeoutError(f"Execution {execution_id} timed out after {timeout}s")
 
             status_response = self.get_execution_status(execution_id)
             current_status = status_response.status
 
             if current_status == Status.COMPLETED:
-                return self.get_execution_result(execution_id)
+                try:
+                    return self.get_execution_result(execution_id)
+                except Exception as e:
+                    if "not available yet" in str(e):
+                        # Execution completed but result not ready yet, wait a bit more
+                        time.sleep(interval)
+                        continue
+                    raise e
             elif current_status in [Status.FAILED, Status.CANCELLED]:
-                reason = f" - {status_response.reason}" if status_response.reason else ""
-                raise Exception(f"Execution {execution_id} ended with status: {current_status.value}{reason}")
+                # Get the execution result to provide outcome and reasoning
+                try:
+                    execution_result = self.get_execution_result(execution_id)
+                    reason = f" - {status_response.reason}" if status_response.reason else ""
+                    raise ExecutionError(
+                        f"Execution {execution_id} ended with status: {current_status.value}{reason}",
+                        execution_result
+                    )
+                except Exception as e:
+                    # If we can't get the execution result, fall back to the original behavior
+                    reason = f" - {status_response.reason}" if status_response.reason else ""
+                    raise ExecutionError(f"Execution {execution_id} ended with status: {current_status.value}{reason}")
 
             # Wait for the specified interval before polling again
             time.sleep(interval)
@@ -662,7 +704,7 @@ def get_execution_status(client: AsteroidClient, execution_id: str) -> Execution
     return client.get_execution_status(execution_id)
 
 
-def get_execution_result(client: AsteroidClient, execution_id: str) -> Dict[str, Any]:
+def get_execution_result(client: AsteroidClient, execution_id: str) -> ExecutionResult:
     """
     Get the final result of an execution.
 
@@ -671,11 +713,14 @@ def get_execution_result(client: AsteroidClient, execution_id: str) -> Dict[str,
         execution_id: The execution identifier
 
     Returns:
-        The result object of the execution
+        The execution result object
+
+    Raises:
+        Exception: If the result is not available yet or execution failed
 
     Example:
         result = get_execution_result(client, execution_id)
-        print(result)
+        print(result.outcome, result.reasoning)
     """
     return client.get_execution_result(execution_id)
 
@@ -685,7 +730,7 @@ def wait_for_execution_result(
     execution_id: str,
     interval: float = 1.0,
     timeout: float = 3600.0
-) -> Dict[str, Any]:
+) -> ExecutionResult:
     """
     Wait for an execution to reach a terminal state and return the result.
 
@@ -696,10 +741,15 @@ def wait_for_execution_result(
         timeout: Maximum wait time in seconds (default is 3600 - 1 hour)
 
     Returns:
-        The execution result if completed
+        The execution result object
+
+    Raises:
+        TimeoutError: If the execution times out
+        ExecutionError: If the execution ends as "cancelled" or "failed"
 
     Example:
         result = wait_for_execution_result(client, execution_id, interval=2.0)
+        print(result.outcome, result.reasoning)
     """
     return client.wait_for_execution_result(execution_id, interval, timeout)
 
@@ -903,5 +953,7 @@ __all__ = [
     'create_agent_profile',
     'update_agent_profile',
     'delete_agent_profile',
-    'get_credentials_public_key'
+    'get_credentials_public_key',
+    'ExecutionError',
+    'TimeoutError'
 ]
