@@ -964,6 +964,8 @@ __all__ = [
     'create_agent_profile',
     'update_agent_profile',
     'delete_agent_profile',
+    'get_last_n_execution_activities',
+    'add_message_to_execution',
     'get_credentials_public_key',
     'AsteroidAPIError',
     'ExecutionError',
