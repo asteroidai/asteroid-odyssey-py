@@ -6,8 +6,12 @@ from .client import (
     get_execution_result,
     wait_for_execution_result,
     upload_execution_files,
-    get_browser_session_recording
+    get_browser_session_recording,
+    AsteroidAPIError,
+    ExecutionError,
+    TimeoutError
 )
+from .agents_v1_gen import ExecutionResult
 
 __all__ = [
     'AsteroidClient',
@@ -17,5 +21,9 @@ __all__ = [
     'get_execution_result',
     'wait_for_execution_result',
     'upload_execution_files',
-    'get_browser_session_recording'
+    'get_browser_session_recording',
+    'AsteroidAPIError',
+    'ExecutionError',
+    'TimeoutError',
+    'ExecutionResult'
 ]

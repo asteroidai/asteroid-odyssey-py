@@ -22,6 +22,7 @@ from .agents_v1_gen import (
     ExecutionApi as AgentsV1ExecutionApi,
     AgentProfileApi as AgentsV1AgentProfileApi,
     ExecutionStatusResponse,
+    ExecutionResult,
     UploadExecutionFiles200Response,
     Status,
     StructuredAgentExecutionRequest,
@@ -39,6 +40,24 @@ from .agents_v2_gen import (
     ExecutionActivity,
     ExecutionUserMessagesAddTextBody,
 )
+
+
+class AsteroidAPIError(Exception):
+    """Base exception for all Asteroid API related errors."""
+    pass
+
+
+class ExecutionError(AsteroidAPIError):
+    """Raised when an execution fails or is cancelled."""
+    def __init__(self, message: str, execution_result: Optional[ExecutionResult] = None):
+        super().__init__(message)
+        self.execution_result = execution_result
+
+
+class TimeoutError(AsteroidAPIError):
+    """Raised when an execution times out."""
+    def __init__(self, message: str):
+        super().__init__(message)
 
 
 def encrypt_with_public_key(plaintext: str, pem_public_key: str) -> str:
@@ -133,7 +152,7 @@ class AsteroidClient:
             The execution ID
 
         Raises:
-            Exception: If the execution request fails
+            AsteroidAPIError: If the execution request fails
 
         Example:
             execution_id = client.execute_agent('my-agent-id', {'input': 'some dynamic value'}, 'agent-profile-id')
@@ -143,7 +162,7 @@ class AsteroidClient:
             response = self.execution_api.execute_agent_structured(agent_id, req)
             return response.execution_id
         except ApiException as e:
-            raise Exception(f"Failed to execute agent: {e}")
+            raise AsteroidAPIError(f"Failed to execute agent: {e}") from e
 
     def get_execution_status(self, execution_id: str) -> ExecutionStatusResponse:
         """
@@ -156,7 +175,7 @@ class AsteroidClient:
             The execution status details
 
         Raises:
-            Exception: If the status request fails
+            AsteroidAPIError: If the status request fails
 
         Example:
             status = client.get_execution_status(execution_id)
@@ -165,9 +184,9 @@ class AsteroidClient:
         try:
             return self.execution_api.get_execution_status(execution_id)
         except ApiException as e:
-            raise Exception(f"Failed to get execution status: {e}")
+            raise AsteroidAPIError(f"Failed to get execution status: {e}") from e
 
-    def get_execution_result(self, execution_id: str) -> Dict[str, Any]:
+    def get_execution_result(self, execution_id: str) -> ExecutionResult:
         """
         Get the final result of an execution.
 
@@ -175,31 +194,40 @@ class AsteroidClient:
             execution_id: The execution identifier
 
         Returns:
-            The result object of the execution
+            The execution result object
 
         Raises:
-            Exception: If the result request fails or execution failed
+            AsteroidAPIError: If the result request fails or execution failed
 
         Example:
             result = client.get_execution_result(execution_id)
-            print(result)
+            print(result.outcome, result.reasoning)
         """
         try:
             response = self.execution_api.get_execution_result(execution_id)
 
             if response.error:
-                raise Exception(response.error)
+                raise AsteroidAPIError(response.error)
 
-            return response.execution_result or {}
+            # Handle case where execution_result might be None or have invalid data
+            if response.execution_result is None:
+                raise AsteroidAPIError("Execution result is not available yet")
+            
+            return response.execution_result
         except ApiException as e:
-            raise Exception(f"Failed to get execution result: {e}")
+            raise AsteroidAPIError(f"Failed to get execution result: {e}") from e
+        except Exception as e:
+            # Handle validation errors from ExecutionResult model
+            if "must be one of enum values" in str(e):
+                raise AsteroidAPIError("Execution result is not available yet - execution may still be running") from e
+            raise e
 
     def wait_for_execution_result(
         self,
         execution_id: str,
         interval: float = 1.0,
         timeout: float = 3600.0
-    ) -> Dict[str, Any]:
+    ) -> ExecutionResult:
         """
         Wait for an execution to reach a terminal state and return the result.
 
@@ -212,29 +240,54 @@ class AsteroidClient:
             timeout: Maximum wait time in seconds (default is 3600 - 1 hour)
 
         Returns:
-            The execution result if completed
+            The execution result object
 
         Raises:
-            Exception: If the execution ends as "cancelled" or "failed", or times out
+            ValueError: If interval or timeout parameters are invalid
+            TimeoutError: If the execution times out
+            ExecutionError: If the execution ends as "cancelled" or "failed"
 
         Example:
             result = client.wait_for_execution_result(execution_id, interval=2.0)
+            print(result.outcome, result.reasoning)
         """
+        # Validate input parameters
+        if interval <= 0:
+            raise ValueError("interval must be positive")
+        if timeout <= 0:
+            raise ValueError("timeout must be positive")
         start_time = time.time()
 
         while True:
             elapsed_time = time.time() - start_time
             if elapsed_time >= timeout:
-                raise Exception(f"Execution {execution_id} timed out after {timeout}s")
+                raise TimeoutError(f"Execution {execution_id} timed out after {timeout}s")
 
             status_response = self.get_execution_status(execution_id)
             current_status = status_response.status
 
             if current_status == Status.COMPLETED:
-                return self.get_execution_result(execution_id)
+                try:
+                    return self.get_execution_result(execution_id)
+                except Exception as e:
+                    if "not available yet" in str(e):
+                        # Execution completed but result not ready yet, wait a bit more
+                        time.sleep(interval)
+                        continue
+                    raise e
             elif current_status in [Status.FAILED, Status.CANCELLED]:
-                reason = f" - {status_response.reason}" if status_response.reason else ""
-                raise Exception(f"Execution {execution_id} ended with status: {current_status.value}{reason}")
+                # Get the execution result to provide outcome and reasoning
+                try:
+                    execution_result = self.get_execution_result(execution_id)
+                    reason = f" - {status_response.reason}" if status_response.reason else ""
+                    raise ExecutionError(
+                        f"Execution {execution_id} ended with status: {current_status.value}{reason}",
+                        execution_result
+                    )
+                except Exception as e:
+                    # If we can't get the execution result, fall back to the original behavior
+                    reason = f" - {status_response.reason}" if status_response.reason else ""
+                    raise ExecutionError(f"Execution {execution_id} ended with status: {current_status.value}{reason}") from e
 
             # Wait for the specified interval before polling again
             time.sleep(interval)
@@ -311,7 +364,7 @@ class AsteroidClient:
             response = self.execution_api.upload_execution_files(execution_id, files=processed_files)
             return response
         except ApiException as e:
-            raise Exception(f"Failed to upload execution files: {e}")
+            raise AsteroidAPIError(f"Failed to upload execution files: {e}") from e
 
     def get_browser_session_recording(self, execution_id: str) -> str:
         """
@@ -334,7 +387,7 @@ class AsteroidClient:
             response = self.execution_api.get_browser_session_recording(execution_id)
             return response.recording_url
         except ApiException as e:
-            raise Exception(f"Failed to get browser session recording: {e}")
+            raise AsteroidAPIError(f"Failed to get browser session recording: {e}") from e
 
     def get_agent_profiles(self, organization_id: str) -> List[AgentProfile]:
         """
@@ -353,7 +406,7 @@ class AsteroidClient:
             response = self.agent_profile_api.get_agent_profiles(organization_id=organization_id)
             return response  # response is already a List[AgentProfile]
         except ApiException as e:
-            raise Exception(f"Failed to get agent profiles: {e}")
+            raise AsteroidAPIError(f"Failed to get agent profiles: {e}") from e
     def get_agent_profile(self, profile_id: str) -> AgentProfile:
         """
         Get an agent profile by ID.
@@ -370,7 +423,7 @@ class AsteroidClient:
             response = self.agent_profile_api.get_agent_profile(profile_id)
             return response
         except ApiException as e:
-            raise Exception(f"Failed to get agent profile: {e}")
+            raise AsteroidAPIError(f"Failed to get agent profile: {e}") from e
 
     def create_agent_profile(self, request: CreateAgentProfileRequest) -> AgentProfile:
         """
@@ -430,7 +483,7 @@ class AsteroidClient:
             response = self.agent_profile_api.create_agent_profile(processed_request)
             return response
         except ApiException as e:
-            raise Exception(f"Failed to create agent profile: {e}")
+            raise AsteroidAPIError(f"Failed to create agent profile: {e}") from e
     def update_agent_profile(self, profile_id: str, request: UpdateAgentProfileRequest) -> AgentProfile:
         """
         Update an agent profile with automatic credential encryption.
@@ -485,7 +538,7 @@ class AsteroidClient:
             response = self.agent_profile_api.update_agent_profile(profile_id, processed_request)
             return response
         except ApiException as e:
-            raise Exception(f"Failed to update agent profile: {e}")
+            raise AsteroidAPIError(f"Failed to update agent profile: {e}") from e
     def delete_agent_profile(self, profile_id: str) -> DeleteAgentProfile200Response:
         """
         Delete an agent profile.
@@ -502,7 +555,7 @@ class AsteroidClient:
             response = self.agent_profile_api.delete_agent_profile(profile_id)
             return response
         except ApiException as e:
-            raise Exception(f"Failed to delete agent profile: {e}")
+            raise AsteroidAPIError(f"Failed to delete agent profile: {e}") from e
 
     def get_credentials_public_key(self) -> str:
         """
@@ -521,7 +574,7 @@ class AsteroidClient:
             response = self.agent_profile_api.get_credentials_public_key()
             return response
         except ApiException as e:
-            raise Exception(f"Failed to get credentials public key: {e}")
+            raise AsteroidAPIError(f"Failed to get credentials public key: {e}") from e
 
     def __enter__(self):
         """Context manager entry."""
@@ -662,7 +715,7 @@ def get_execution_status(client: AsteroidClient, execution_id: str) -> Execution
     return client.get_execution_status(execution_id)
 
 
-def get_execution_result(client: AsteroidClient, execution_id: str) -> Dict[str, Any]:
+def get_execution_result(client: AsteroidClient, execution_id: str) -> ExecutionResult:
     """
     Get the final result of an execution.
 
@@ -671,11 +724,14 @@ def get_execution_result(client: AsteroidClient, execution_id: str) -> Dict[str,
         execution_id: The execution identifier
 
     Returns:
-        The result object of the execution
+        The execution result object
+
+    Raises:
+        Exception: If the result is not available yet or execution failed
 
     Example:
         result = get_execution_result(client, execution_id)
-        print(result)
+        print(result.outcome, result.reasoning)
     """
     return client.get_execution_result(execution_id)
 
@@ -685,7 +741,7 @@ def wait_for_execution_result(
     execution_id: str,
     interval: float = 1.0,
     timeout: float = 3600.0
-) -> Dict[str, Any]:
+) -> ExecutionResult:
     """
     Wait for an execution to reach a terminal state and return the result.
 
@@ -696,10 +752,15 @@ def wait_for_execution_result(
         timeout: Maximum wait time in seconds (default is 3600 - 1 hour)
 
     Returns:
-        The execution result if completed
+        The execution result object
+
+    Raises:
+        TimeoutError: If the execution times out
+        ExecutionError: If the execution ends as "cancelled" or "failed"
 
     Example:
         result = wait_for_execution_result(client, execution_id, interval=2.0)
+        print(result.outcome, result.reasoning)
     """
     return client.wait_for_execution_result(execution_id, interval, timeout)
 
@@ -903,5 +964,8 @@ __all__ = [
     'create_agent_profile',
     'update_agent_profile',
     'delete_agent_profile',
-    'get_credentials_public_key'
+    'get_credentials_public_key',
+    'AsteroidAPIError',
+    'ExecutionError',
+    'TimeoutError'
 ]
