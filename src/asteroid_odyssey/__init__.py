@@ -7,6 +7,7 @@ from .client import (
     wait_for_execution_result,
     upload_execution_files,
     get_browser_session_recording,
+    AsteroidAPIError,
     ExecutionError,
     TimeoutError
 )
@@ -21,6 +22,7 @@ __all__ = [
     'wait_for_execution_result',
     'upload_execution_files',
     'get_browser_session_recording',
+    'AsteroidAPIError',
     'ExecutionError',
     'TimeoutError',
     'ExecutionResult'

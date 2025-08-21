@@ -42,14 +42,19 @@ from .agents_v2_gen import (
 )
 
 
-class ExecutionError(Exception):
+class AsteroidAPIError(Exception):
+    """Base exception for all Asteroid API related errors."""
+    pass
+
+
+class ExecutionError(AsteroidAPIError):
     """Raised when an execution fails or is cancelled."""
     def __init__(self, message: str, execution_result: Optional[ExecutionResult] = None):
         super().__init__(message)
         self.execution_result = execution_result
 
 
-class TimeoutError(Exception):
+class TimeoutError(AsteroidAPIError):
     """Raised when an execution times out."""
     def __init__(self, message: str):
         super().__init__(message)
@@ -147,7 +152,7 @@ class AsteroidClient:
             The execution ID
 
         Raises:
-            Exception: If the execution request fails
+            AsteroidAPIError: If the execution request fails
 
         Example:
             execution_id = client.execute_agent('my-agent-id', {'input': 'some dynamic value'}, 'agent-profile-id')
@@ -157,7 +162,7 @@ class AsteroidClient:
             response = self.execution_api.execute_agent_structured(agent_id, req)
             return response.execution_id
         except ApiException as e:
-            raise RuntimeError(f"Failed to execute agent: {e}")
+            raise AsteroidAPIError(f"Failed to execute agent: {e}") from e
 
     def get_execution_status(self, execution_id: str) -> ExecutionStatusResponse:
         """
@@ -170,7 +175,7 @@ class AsteroidClient:
             The execution status details
 
         Raises:
-            Exception: If the status request fails
+            AsteroidAPIError: If the status request fails
 
         Example:
             status = client.get_execution_status(execution_id)
@@ -179,7 +184,7 @@ class AsteroidClient:
         try:
             return self.execution_api.get_execution_status(execution_id)
         except ApiException as e:
-            raise Exception(f"Failed to get execution status: {e}")
+            raise AsteroidAPIError(f"Failed to get execution status: {e}") from e
 
     def get_execution_result(self, execution_id: str) -> ExecutionResult:
         """
@@ -192,7 +197,7 @@ class AsteroidClient:
             The execution result object
 
         Raises:
-            Exception: If the result request fails or execution failed
+            AsteroidAPIError: If the result request fails or execution failed
 
         Example:
             result = client.get_execution_result(execution_id)
@@ -202,19 +207,19 @@ class AsteroidClient:
             response = self.execution_api.get_execution_result(execution_id)
 
             if response.error:
-                raise Exception(response.error)
+                raise AsteroidAPIError(response.error)
 
             # Handle case where execution_result might be None or have invalid data
             if response.execution_result is None:
-                raise Exception("Execution result is not available yet")
+                raise AsteroidAPIError("Execution result is not available yet")
             
             return response.execution_result
         except ApiException as e:
-            raise Exception(f"Failed to get execution result: {e}")
+            raise AsteroidAPIError(f"Failed to get execution result: {e}") from e
         except Exception as e:
             # Handle validation errors from ExecutionResult model
             if "must be one of enum values" in str(e):
-                raise Exception("Execution result is not available yet - execution may still be running")
+                raise AsteroidAPIError("Execution result is not available yet - execution may still be running") from e
             raise e
 
     def wait_for_execution_result(
@@ -238,6 +243,7 @@ class AsteroidClient:
             The execution result object
 
         Raises:
+            ValueError: If interval or timeout parameters are invalid
             TimeoutError: If the execution times out
             ExecutionError: If the execution ends as "cancelled" or "failed"
 
@@ -245,6 +251,11 @@ class AsteroidClient:
             result = client.wait_for_execution_result(execution_id, interval=2.0)
             print(result.outcome, result.reasoning)
         """
+        # Validate input parameters
+        if interval <= 0:
+            raise ValueError("interval must be positive")
+        if timeout <= 0:
+            raise ValueError("timeout must be positive")
         start_time = time.time()
 
         while True:
@@ -276,7 +287,7 @@ class AsteroidClient:
                 except Exception as e:
                     # If we can't get the execution result, fall back to the original behavior
                     reason = f" - {status_response.reason}" if status_response.reason else ""
-                    raise ExecutionError(f"Execution {execution_id} ended with status: {current_status.value}{reason}")
+                    raise ExecutionError(f"Execution {execution_id} ended with status: {current_status.value}{reason}") from e
 
             # Wait for the specified interval before polling again
             time.sleep(interval)
@@ -353,7 +364,7 @@ class AsteroidClient:
             response = self.execution_api.upload_execution_files(execution_id, files=processed_files)
             return response
         except ApiException as e:
-            raise Exception(f"Failed to upload execution files: {e}")
+            raise AsteroidAPIError(f"Failed to upload execution files: {e}") from e
 
     def get_browser_session_recording(self, execution_id: str) -> str:
         """
@@ -376,7 +387,7 @@ class AsteroidClient:
             response = self.execution_api.get_browser_session_recording(execution_id)
             return response.recording_url
         except ApiException as e:
-            raise Exception(f"Failed to get browser session recording: {e}")
+            raise AsteroidAPIError(f"Failed to get browser session recording: {e}") from e
 
     def get_agent_profiles(self, organization_id: str) -> List[AgentProfile]:
         """
@@ -395,7 +406,7 @@ class AsteroidClient:
             response = self.agent_profile_api.get_agent_profiles(organization_id=organization_id)
             return response  # response is already a List[AgentProfile]
         except ApiException as e:
-            raise Exception(f"Failed to get agent profiles: {e}")
+            raise AsteroidAPIError(f"Failed to get agent profiles: {e}") from e
     def get_agent_profile(self, profile_id: str) -> AgentProfile:
         """
         Get an agent profile by ID.
@@ -412,7 +423,7 @@ class AsteroidClient:
             response = self.agent_profile_api.get_agent_profile(profile_id)
             return response
         except ApiException as e:
-            raise Exception(f"Failed to get agent profile: {e}")
+            raise AsteroidAPIError(f"Failed to get agent profile: {e}") from e
 
     def create_agent_profile(self, request: CreateAgentProfileRequest) -> AgentProfile:
         """
@@ -472,7 +483,7 @@ class AsteroidClient:
             response = self.agent_profile_api.create_agent_profile(processed_request)
             return response
         except ApiException as e:
-            raise Exception(f"Failed to create agent profile: {e}")
+            raise AsteroidAPIError(f"Failed to create agent profile: {e}") from e
     def update_agent_profile(self, profile_id: str, request: UpdateAgentProfileRequest) -> AgentProfile:
         """
         Update an agent profile with automatic credential encryption.
@@ -527,7 +538,7 @@ class AsteroidClient:
             response = self.agent_profile_api.update_agent_profile(profile_id, processed_request)
             return response
         except ApiException as e:
-            raise Exception(f"Failed to update agent profile: {e}")
+            raise AsteroidAPIError(f"Failed to update agent profile: {e}") from e
     def delete_agent_profile(self, profile_id: str) -> DeleteAgentProfile200Response:
         """
         Delete an agent profile.
@@ -544,7 +555,7 @@ class AsteroidClient:
             response = self.agent_profile_api.delete_agent_profile(profile_id)
             return response
         except ApiException as e:
-            raise Exception(f"Failed to delete agent profile: {e}")
+            raise AsteroidAPIError(f"Failed to delete agent profile: {e}") from e
 
     def get_credentials_public_key(self) -> str:
         """
@@ -563,7 +574,7 @@ class AsteroidClient:
             response = self.agent_profile_api.get_credentials_public_key()
             return response
         except ApiException as e:
-            raise Exception(f"Failed to get credentials public key: {e}")
+            raise AsteroidAPIError(f"Failed to get credentials public key: {e}") from e
 
     def __enter__(self):
         """Context manager entry."""
@@ -954,6 +965,7 @@ __all__ = [
     'update_agent_profile',
     'delete_agent_profile',
     'get_credentials_public_key',
+    'AsteroidAPIError',
     'ExecutionError',
     'TimeoutError'
 ]
