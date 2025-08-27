@@ -20,6 +20,7 @@ import json
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
 from typing import Any, ClassVar, Dict, List
 from typing_extensions import Annotated
+from asteroid_odyssey.agents_v1_gen.models.cookie import Cookie
 from asteroid_odyssey.agents_v1_gen.models.country_code import CountryCode
 from asteroid_odyssey.agents_v1_gen.models.credential import Credential
 from asteroid_odyssey.agents_v1_gen.models.proxy_type import ProxyType
@@ -38,7 +39,8 @@ class CreateAgentProfileRequest(BaseModel):
     captcha_solver_active: StrictBool = Field(description="Whether the captcha solver should be active for this profile")
     sticky_ip: StrictBool = Field(description="Whether the same IP address should be used for all executions of this profile")
     credentials: List[Credential] = Field(description="Optional list of credentials to create with the profile")
-    __properties: ClassVar[List[str]] = ["name", "description", "organization_id", "proxy_cc", "proxy_type", "captcha_solver_active", "sticky_ip", "credentials"]
+    cookies: List[Cookie] = Field(description="Optional list of cookies to create with the profile")
+    __properties: ClassVar[List[str]] = ["name", "description", "organization_id", "proxy_cc", "proxy_type", "captcha_solver_active", "sticky_ip", "credentials", "cookies"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -86,6 +88,13 @@ class CreateAgentProfileRequest(BaseModel):
                 if _item_credentials:
                     _items.append(_item_credentials.to_dict())
             _dict['credentials'] = _items
+        # override the default output from pydantic by calling `to_dict()` of each item in cookies (list)
+        _items = []
+        if self.cookies:
+            for _item_cookies in self.cookies:
+                if _item_cookies:
+                    _items.append(_item_cookies.to_dict())
+            _dict['cookies'] = _items
         return _dict
 
     @classmethod
@@ -105,7 +114,8 @@ class CreateAgentProfileRequest(BaseModel):
             "proxy_type": obj.get("proxy_type"),
             "captcha_solver_active": obj.get("captcha_solver_active") if obj.get("captcha_solver_active") is not None else False,
             "sticky_ip": obj.get("sticky_ip") if obj.get("sticky_ip") is not None else False,
-            "credentials": [Credential.from_dict(_item) for _item in obj["credentials"]] if obj.get("credentials") is not None else None
+            "credentials": [Credential.from_dict(_item) for _item in obj["credentials"]] if obj.get("credentials") is not None else None,
+            "cookies": [Cookie.from_dict(_item) for _item in obj["cookies"]] if obj.get("cookies") is not None else None
         })
         return _obj
 

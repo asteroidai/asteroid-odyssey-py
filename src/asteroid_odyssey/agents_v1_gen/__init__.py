@@ -32,6 +32,7 @@ __all__ = [
     "ApiException",
     "AgentProfile",
     "BrowserSessionRecordingResponse",
+    "Cookie",
     "CountryCode",
     "CreateAgentProfileRequest",
     "Credential",
@@ -69,6 +70,7 @@ from asteroid_odyssey.agents_v1_gen.exceptions import ApiException as ApiExcepti
 # import models into sdk package
 from asteroid_odyssey.agents_v1_gen.models.agent_profile import AgentProfile as AgentProfile
 from asteroid_odyssey.agents_v1_gen.models.browser_session_recording_response import BrowserSessionRecordingResponse as BrowserSessionRecordingResponse
+from asteroid_odyssey.agents_v1_gen.models.cookie import Cookie as Cookie
 from asteroid_odyssey.agents_v1_gen.models.country_code import CountryCode as CountryCode
 from asteroid_odyssey.agents_v1_gen.models.create_agent_profile_request import CreateAgentProfileRequest as CreateAgentProfileRequest
 from asteroid_odyssey.agents_v1_gen.models.credential import Credential as Credential
