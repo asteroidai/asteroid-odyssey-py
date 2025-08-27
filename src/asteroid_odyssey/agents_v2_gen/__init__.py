@@ -50,6 +50,10 @@ __all__ = [
     "ExecutionActivityStepStartedPayload",
     "ExecutionActivityTransitionedNodePayload",
     "ExecutionActivityUserMessageReceivedPayload",
+    "ExecutionAwaitingConfirmationPayload",
+    "ExecutionCompletedPayload",
+    "ExecutionFailedPayload",
+    "ExecutionPausedPayload",
     "ExecutionStatus",
     "ExecutionTerminalPayload",
     "ExecutionUserMessagesAddTextBody",
@@ -93,6 +97,10 @@ from asteroid_odyssey.agents_v2_gen.models.execution_activity_step_completed_pay
 from asteroid_odyssey.agents_v2_gen.models.execution_activity_step_started_payload import ExecutionActivityStepStartedPayload as ExecutionActivityStepStartedPayload
 from asteroid_odyssey.agents_v2_gen.models.execution_activity_transitioned_node_payload import ExecutionActivityTransitionedNodePayload as ExecutionActivityTransitionedNodePayload
 from asteroid_odyssey.agents_v2_gen.models.execution_activity_user_message_received_payload import ExecutionActivityUserMessageReceivedPayload as ExecutionActivityUserMessageReceivedPayload
+from asteroid_odyssey.agents_v2_gen.models.execution_awaiting_confirmation_payload import ExecutionAwaitingConfirmationPayload as ExecutionAwaitingConfirmationPayload
+from asteroid_odyssey.agents_v2_gen.models.execution_completed_payload import ExecutionCompletedPayload as ExecutionCompletedPayload
+from asteroid_odyssey.agents_v2_gen.models.execution_failed_payload import ExecutionFailedPayload as ExecutionFailedPayload
+from asteroid_odyssey.agents_v2_gen.models.execution_paused_payload import ExecutionPausedPayload as ExecutionPausedPayload
 from asteroid_odyssey.agents_v2_gen.models.execution_status import ExecutionStatus as ExecutionStatus
 from asteroid_odyssey.agents_v2_gen.models.execution_terminal_payload import ExecutionTerminalPayload as ExecutionTerminalPayload
 from asteroid_odyssey.agents_v2_gen.models.execution_user_messages_add_text_body import ExecutionUserMessagesAddTextBody as ExecutionUserMessagesAddTextBody

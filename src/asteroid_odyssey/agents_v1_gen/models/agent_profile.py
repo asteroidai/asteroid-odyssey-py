@@ -20,6 +20,7 @@ import json
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
 from typing import Any, ClassVar, Dict, List
+from asteroid_odyssey.agents_v1_gen.models.cookie import Cookie
 from asteroid_odyssey.agents_v1_gen.models.country_code import CountryCode
 from asteroid_odyssey.agents_v1_gen.models.credential import Credential
 from asteroid_odyssey.agents_v1_gen.models.proxy_type import ProxyType
@@ -39,9 +40,10 @@ class AgentProfile(BaseModel):
     captcha_solver_active: StrictBool = Field(description="Whether the captcha solver is active for this profile")
     sticky_ip: StrictBool = Field(description="Whether the same IP address should be used for all executions of this profile")
     credentials: List[Credential] = Field(description="List of credentials associated with this agent profile")
+    cookies: List[Cookie] = Field(description="List of cookies associated with this agent profile")
     created_at: datetime = Field(description="The date and time the agent profile was created")
     updated_at: datetime = Field(description="The last update time of the agent profile")
-    __properties: ClassVar[List[str]] = ["id", "name", "description", "organization_id", "proxy_cc", "proxy_type", "captcha_solver_active", "sticky_ip", "credentials", "created_at", "updated_at"]
+    __properties: ClassVar[List[str]] = ["id", "name", "description", "organization_id", "proxy_cc", "proxy_type", "captcha_solver_active", "sticky_ip", "credentials", "cookies", "created_at", "updated_at"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -89,6 +91,13 @@ class AgentProfile(BaseModel):
                 if _item_credentials:
                     _items.append(_item_credentials.to_dict())
             _dict['credentials'] = _items
+        # override the default output from pydantic by calling `to_dict()` of each item in cookies (list)
+        _items = []
+        if self.cookies:
+            for _item_cookies in self.cookies:
+                if _item_cookies:
+                    _items.append(_item_cookies.to_dict())
+            _dict['cookies'] = _items
         return _dict
 
     @classmethod
@@ -110,6 +119,7 @@ class AgentProfile(BaseModel):
             "captcha_solver_active": obj.get("captcha_solver_active"),
             "sticky_ip": obj.get("sticky_ip"),
             "credentials": [Credential.from_dict(_item) for _item in obj["credentials"]] if obj.get("credentials") is not None else None,
+            "cookies": [Cookie.from_dict(_item) for _item in obj["cookies"]] if obj.get("cookies") is not None else None,
             "created_at": obj.get("created_at"),
             "updated_at": obj.get("updated_at")
         })

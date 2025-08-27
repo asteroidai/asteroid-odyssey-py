@@ -20,6 +20,7 @@ import json
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from typing_extensions import Annotated
+from asteroid_odyssey.agents_v1_gen.models.cookie import Cookie
 from asteroid_odyssey.agents_v1_gen.models.country_code import CountryCode
 from asteroid_odyssey.agents_v1_gen.models.credential import Credential
 from asteroid_odyssey.agents_v1_gen.models.proxy_type import ProxyType
@@ -38,7 +39,9 @@ class UpdateAgentProfileRequest(BaseModel):
     sticky_ip: Optional[StrictBool] = Field(default=None, description="Whether the same IP address should be used for all executions of this profile")
     credentials_to_add: Optional[List[Credential]] = Field(default=None, description="List of credentials to add to the profile")
     credentials_to_delete: Optional[List[StrictStr]] = Field(default=None, description="List of credential IDs to delete from the profile")
-    __properties: ClassVar[List[str]] = ["name", "description", "proxy_cc", "proxy_type", "captcha_solver_active", "sticky_ip", "credentials_to_add", "credentials_to_delete"]
+    cookies_to_add: Optional[List[Cookie]] = Field(default=None, description="List of cookies to add to the profile")
+    cookies_to_delete: Optional[List[StrictStr]] = Field(default=None, description="List of cookie IDs to delete from the profile")
+    __properties: ClassVar[List[str]] = ["name", "description", "proxy_cc", "proxy_type", "captcha_solver_active", "sticky_ip", "credentials_to_add", "credentials_to_delete", "cookies_to_add", "cookies_to_delete"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -86,6 +89,13 @@ class UpdateAgentProfileRequest(BaseModel):
                 if _item_credentials_to_add:
                     _items.append(_item_credentials_to_add.to_dict())
             _dict['credentials_to_add'] = _items
+        # override the default output from pydantic by calling `to_dict()` of each item in cookies_to_add (list)
+        _items = []
+        if self.cookies_to_add:
+            for _item_cookies_to_add in self.cookies_to_add:
+                if _item_cookies_to_add:
+                    _items.append(_item_cookies_to_add.to_dict())
+            _dict['cookies_to_add'] = _items
         return _dict
 
     @classmethod
@@ -105,7 +115,9 @@ class UpdateAgentProfileRequest(BaseModel):
             "captcha_solver_active": obj.get("captcha_solver_active"),
             "sticky_ip": obj.get("sticky_ip"),
             "credentials_to_add": [Credential.from_dict(_item) for _item in obj["credentials_to_add"]] if obj.get("credentials_to_add") is not None else None,
-            "credentials_to_delete": obj.get("credentials_to_delete")
+            "credentials_to_delete": obj.get("credentials_to_delete"),
+            "cookies_to_add": [Cookie.from_dict(_item) for _item in obj["cookies_to_add"]] if obj.get("cookies_to_add") is not None else None,
+            "cookies_to_delete": obj.get("cookies_to_delete")
         })
         return _obj
 

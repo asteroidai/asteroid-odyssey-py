@@ -17,8 +17,12 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict
-from typing import Any, ClassVar, Dict, List
+from pydantic import BaseModel, ConfigDict, Field
+from typing import Any, ClassVar, Dict, List, Optional
+from asteroid_odyssey.agents_v2_gen.models.execution_awaiting_confirmation_payload import ExecutionAwaitingConfirmationPayload
+from asteroid_odyssey.agents_v2_gen.models.execution_completed_payload import ExecutionCompletedPayload
+from asteroid_odyssey.agents_v2_gen.models.execution_failed_payload import ExecutionFailedPayload
+from asteroid_odyssey.agents_v2_gen.models.execution_paused_payload import ExecutionPausedPayload
 from asteroid_odyssey.agents_v2_gen.models.execution_status import ExecutionStatus
 from typing import Optional, Set
 from typing_extensions import Self
@@ -27,8 +31,12 @@ class ExecutionActivityStatusChangedPayload(BaseModel):
     """
     ExecutionActivityStatusChangedPayload
     """ # noqa: E501
+    awaiting_confirmation_payload: Optional[ExecutionAwaitingConfirmationPayload] = Field(default=None, alias="awaitingConfirmationPayload")
+    completed_payload: Optional[ExecutionCompletedPayload] = Field(default=None, alias="completedPayload")
+    failed_payload: Optional[ExecutionFailedPayload] = Field(default=None, alias="failedPayload")
+    paused_payload: Optional[ExecutionPausedPayload] = Field(default=None, alias="pausedPayload")
     status: ExecutionStatus
-    __properties: ClassVar[List[str]] = ["status"]
+    __properties: ClassVar[List[str]] = ["awaitingConfirmationPayload", "completedPayload", "failedPayload", "pausedPayload", "status"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -69,6 +77,18 @@ class ExecutionActivityStatusChangedPayload(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # override the default output from pydantic by calling `to_dict()` of awaiting_confirmation_payload
+        if self.awaiting_confirmation_payload:
+            _dict['awaitingConfirmationPayload'] = self.awaiting_confirmation_payload.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of completed_payload
+        if self.completed_payload:
+            _dict['completedPayload'] = self.completed_payload.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of failed_payload
+        if self.failed_payload:
+            _dict['failedPayload'] = self.failed_payload.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of paused_payload
+        if self.paused_payload:
+            _dict['pausedPayload'] = self.paused_payload.to_dict()
         return _dict
 
     @classmethod
@@ -81,6 +101,10 @@ class ExecutionActivityStatusChangedPayload(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
+            "awaitingConfirmationPayload": ExecutionAwaitingConfirmationPayload.from_dict(obj["awaitingConfirmationPayload"]) if obj.get("awaitingConfirmationPayload") is not None else None,
+            "completedPayload": ExecutionCompletedPayload.from_dict(obj["completedPayload"]) if obj.get("completedPayload") is not None else None,
+            "failedPayload": ExecutionFailedPayload.from_dict(obj["failedPayload"]) if obj.get("failedPayload") is not None else None,
+            "pausedPayload": ExecutionPausedPayload.from_dict(obj["pausedPayload"]) if obj.get("pausedPayload") is not None else None,
             "status": obj.get("status")
         })
         return _obj
