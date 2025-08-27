@@ -219,7 +219,7 @@ class AsteroidClient:
             # Handle case where execution_result might be None or have invalid data
             if response.execution_result is None:
                 raise AsteroidAPIError("Execution result is not available yet")
-            
+
             return response.execution_result
         except ApiException as e:
             raise AsteroidAPIError(f"Failed to get execution result: {e}") from e
@@ -591,39 +591,39 @@ class AsteroidClient:
     ) -> AgentInteractionResult:
         """
         Wait for an agent interaction request or terminal state.
-        
+
         This method polls an existing execution until it either:
         1. Requests human input (paused_by_agent state)
         2. Reaches a terminal state (completed, failed, cancelled)
         3. Times out
-        
+
         Unlike interactive_agent, this method doesn't start an execution or handle
         the response automatically - it just waits and reports what happened.
-        
+
         Args:
             execution_id: The execution identifier for an already started execution
             poll_interval: How often to check for updates in seconds (default: 2.0)
             timeout: Maximum wait time in seconds (default: 3600 - 1 hour)
-            
+
         Returns:
             AgentInteractionResult containing:
             - is_terminal: True if execution finished (completed/failed/cancelled)
             - status: Current execution status string
             - agent_message: Agent's message if requesting interaction (None if terminal)
             - execution_result: Final result if terminal state (None if requesting interaction)
-            
+
         Raises:
             ValueError: If interval or timeout parameters are invalid
             TimeoutError: If the execution times out
             AsteroidAPIError: If API calls fail
-            
+
         Example:
             # Start an execution first
             execution_id = client.execute_agent('agent-id', {'input': 'test'})
-            
+
             # Wait for interaction or completion
             result = client.wait_for_agent_interaction(execution_id)
-            
+
             if result.is_terminal:
                 print(f"Execution finished with status: {result.status}")
                 if result.execution_result:
@@ -640,19 +640,19 @@ class AsteroidClient:
             raise ValueError("poll_interval must be positive")
         if timeout <= 0:
             raise ValueError("timeout must be positive")
-            
+
         start_time = time.time()
-        
+
         while True:
             elapsed_time = time.time() - start_time
             if elapsed_time >= timeout:
                 raise TimeoutError(f"Wait for interaction on execution {execution_id} timed out after {timeout}s")
-                
+
             # Get current status
             status_response = self.get_execution_status(execution_id)
             current_status = status_response.status
             status_str = current_status.value.lower()
-            
+
             # Handle terminal states
             if current_status == Status.COMPLETED:
                 try:
@@ -668,7 +668,7 @@ class AsteroidClient:
                         time.sleep(poll_interval)
                         continue
                     raise e
-                    
+
             elif current_status in [Status.FAILED, Status.CANCELLED]:
                 try:
                     execution_result = self.get_execution_result(execution_id)
@@ -686,7 +686,7 @@ class AsteroidClient:
                         agent_message=None,
                         execution_result=None
                     )
-                    
+
             # Handle agent interaction request
             elif current_status == Status.PAUSED_BY_AGENT:
                 # Get the agent's message/request
@@ -697,34 +697,34 @@ class AsteroidClient:
                     agent_message=agent_message,
                     execution_result=None
                 )
-                
+
             # Wait before next poll for non-terminal, non-interaction states
             time.sleep(poll_interval)
-            
+
     def _extract_agent_request_message(self, execution_id: str) -> str:
         """
         Extract the agent's request message from recent activities.
-        
+
         Args:
             execution_id: The execution identifier
-            
+
         Returns:
             The agent's message or a default message if not found
         """
         try:
             activities = self.get_last_n_execution_activities(execution_id, 20)
-            
+
             # Filter for human input requests
             human_input_requests = [
                 activity for activity in activities
-                if (hasattr(activity, 'payload') and 
-                    activity.payload and 
+                if (hasattr(activity, 'payload') and
+                    activity.payload and
                     getattr(activity.payload, 'activityType', None) == 'action_started')
             ]
-            
+
             if human_input_requests:
                 human_input_request = human_input_requests[0]
-                
+
                 # Extract message from payload data with robust error handling
                 try:
                     payload = human_input_request.payload
@@ -735,9 +735,9 @@ class AsteroidClient:
                     return 'Agent is requesting input'
                 except (AttributeError, TypeError) as e:
                     return 'Agent is requesting input (extraction failed)'
-                    
+
             return 'Agent is requesting input'
-            
+
         except AsteroidAPIError as e:
             return 'Agent is requesting input (API error)'
         except Exception as e:
@@ -761,33 +761,6 @@ class AsteroidClient:
         except Exception as e:
             pass
         return False
-
-    # Utility methods for nicer response formatting
-    def format_agent_profile(self, profile: AgentProfile) -> str:
-        """Format an agent profile for nice display."""
-        credentials_info = f"{[(credential.name, credential.id) for credential in profile.credentials]}" if profile.credentials else "No credentials"
-        return f"""Agent Profile:
-  ID: {profile.id}
-  Name: {profile.name}
-  Description: {profile.description}
-  Organization: {profile.organization_id}
-  Proxy: {profile.proxy_cc.value} ({profile.proxy_type.value})
-  Captcha Solver: {'Enabled' if profile.captcha_solver_active else 'Disabled'}
-  Sticky IP: {'Yes' if profile.sticky_ip else 'No'}
-  Credentials: {credentials_info}
-  Created: {profile.created_at.strftime('%Y-%m-%d %H:%M:%S')}
-  Updated: {profile.updated_at.strftime('%Y-%m-%d %H:%M:%S')}"""
-
-    def format_agent_profiles_list(self, profiles: List[AgentProfile]) -> str:
-        """Format a list of agent profiles for nice display."""
-        if not profiles:
-            return "No agent profiles found."
-
-        result = f"Found {len(profiles)} agent profile(s):\n"
-        for i, profile in enumerate(profiles, 1):
-            credentials_count = len(profile.credentials) if profile.credentials else 0
-            result += f"  {i}. {profile.name} (ID: {profile.id[:8]}...) - {credentials_count} credentials\n"
-        return result.rstrip()
 
     # --- V2 ---
 
@@ -1122,34 +1095,34 @@ def wait_for_agent_interaction(
 ) -> AgentInteractionResult:
     """
     Wait for an agent interaction request or terminal state.
-    
+
     This convenience function provides the same functionality as the AsteroidClient.wait_for_agent_interaction method.
-    
+
     Args:
         client: The AsteroidClient instance
         execution_id: The execution identifier for an already started execution
         poll_interval: How often to check for updates in seconds (default: 2.0)
         timeout: Maximum wait time in seconds (default: 3600 - 1 hour)
-        
+
     Returns:
         AgentInteractionResult containing:
         - is_terminal: True if execution finished (completed/failed/cancelled)
         - status: Current execution status string
         - agent_message: Agent's message if requesting interaction (None if terminal)
         - execution_result: Final result if terminal state (None if requesting interaction)
-        
+
     Raises:
         ValueError: If interval or timeout parameters are invalid
         TimeoutError: If the execution times out
         AsteroidAPIError: If API calls fail
-        
+
     Example:
         # Start an execution first
         execution_id = execute_agent(client, 'agent-id', {'input': 'test'})
-        
+
         # Wait for interaction or completion
         result = wait_for_agent_interaction(client, execution_id)
-        
+
         if result.is_terminal:
             print(f"Execution finished with status: {result.status}")
             if result.execution_result:
