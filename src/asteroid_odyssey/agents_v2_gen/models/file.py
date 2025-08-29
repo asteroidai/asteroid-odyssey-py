@@ -17,19 +17,29 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, Field, StrictStr
+from datetime import datetime
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
 from typing import Any, ClassVar, Dict, List
 from uuid import UUID
 from typing import Optional, Set
 from typing_extensions import Self
 
-class ExecutionActivityUserMessageReceivedPayload(BaseModel):
+class File(BaseModel):
     """
-    ExecutionActivityUserMessageReceivedPayload
+    File
     """ # noqa: E501
-    message: StrictStr
-    user_uuid: UUID = Field(alias="userUUID")
-    __properties: ClassVar[List[str]] = ["message", "userUUID"]
+    agent_id: UUID = Field(alias="agentId")
+    created_at: datetime = Field(alias="createdAt")
+    execution_id: UUID = Field(alias="executionId")
+    file_ext: StrictStr = Field(alias="fileExt")
+    file_name: StrictStr = Field(alias="fileName")
+    file_path: StrictStr = Field(alias="filePath")
+    file_size: StrictInt = Field(alias="fileSize")
+    file_type: StrictStr = Field(alias="fileType")
+    id: UUID
+    mime_type: StrictStr = Field(alias="mimeType")
+    signed_url: StrictStr = Field(alias="signedUrl")
+    __properties: ClassVar[List[str]] = ["agentId", "createdAt", "executionId", "fileExt", "fileName", "filePath", "fileSize", "fileType", "id", "mimeType", "signedUrl"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -49,7 +59,7 @@ class ExecutionActivityUserMessageReceivedPayload(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of ExecutionActivityUserMessageReceivedPayload from a JSON string"""
+        """Create an instance of File from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -74,7 +84,7 @@ class ExecutionActivityUserMessageReceivedPayload(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of ExecutionActivityUserMessageReceivedPayload from a dict"""
+        """Create an instance of File from a dict"""
         if obj is None:
             return None
 
@@ -82,8 +92,17 @@ class ExecutionActivityUserMessageReceivedPayload(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "message": obj.get("message"),
-            "userUUID": obj.get("userUUID")
+            "agentId": obj.get("agentId"),
+            "createdAt": obj.get("createdAt"),
+            "executionId": obj.get("executionId"),
+            "fileExt": obj.get("fileExt"),
+            "fileName": obj.get("fileName"),
+            "filePath": obj.get("filePath"),
+            "fileSize": obj.get("fileSize"),
+            "fileType": obj.get("fileType"),
+            "id": obj.get("id"),
+            "mimeType": obj.get("mimeType"),
+            "signedUrl": obj.get("signedUrl")
         })
         return _obj
 

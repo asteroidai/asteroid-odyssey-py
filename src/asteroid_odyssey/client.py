@@ -11,6 +11,8 @@ without modifying any generated files.
 import time
 import os
 import base64
+import requests
+from pathlib import Path
 from typing import Dict, Any, Optional, List, Union, Tuple, NamedTuple
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
@@ -38,6 +40,7 @@ from .agents_v2_gen import (
     ExecutionApi as AgentsV2ExecutionApi,
     ExecutionActivity,
     ExecutionUserMessagesAddTextBody,
+    File,
 )
 
 
@@ -819,6 +822,123 @@ class AsteroidClient:
         message_body = ExecutionUserMessagesAddTextBody(message=message)
         return self.agents_v2_execution_api.user_messages_add(execution_id, message_body)
 
+    def get_execution_files(self, execution_id: str) -> List[File]:
+        """
+        Get a list of files associated with an execution.
+        Args:
+            execution_id: The execution identifier
+        Returns:
+            A list of files associated with the execution
+        Raises:
+            Exception: If the files request fails
+        Example:
+            files = client.get_execution_files("execution_id")
+            for file in files:
+                print(f"File: {file.file_name}, Size: {file.file_size}")
+        """
+        try:
+            return self.agents_v2_execution_api.context_files_get(execution_id)
+        except ApiException as e:
+            raise AsteroidAPIError(f"Failed to get execution files: {e}") from e
+
+    def download_execution_file(self, file: File, download_path: Union[str, Path], 
+                              create_dirs: bool = True, timeout: int = 30) -> str:
+        """
+        Download a file from an execution using its signed URL.
+        
+        Args:
+            file: The File object containing the signed URL and metadata
+            download_path: Path where the file should be saved. Can be a directory or full file path
+            create_dirs: Whether to create parent directories if they don't exist (default: True)
+            timeout: Request timeout in seconds (default: 30)
+            
+        Returns:
+            The full path where the file was saved
+            
+        Raises:
+            AsteroidAPIError: If the download fails
+            FileNotFoundError: If the parent directory doesn't exist and create_dirs is False
+            
+        Example:
+            files = client.get_execution_files("execution_id")
+            for file in files:
+                # Download to specific directory
+                saved_path = client.download_execution_file(file, "/path/to/downloads/")
+                print(f"Downloaded {file.file_name} to {saved_path}")
+                
+                # Download with specific filename
+                saved_path = client.download_execution_file(file, "/path/to/downloads/my_file.txt")
+                print(f"Downloaded to {saved_path}")
+        """
+        final_path = None
+        try:
+            # Convert to Path object for easier manipulation
+            download_path = Path(download_path)
+            
+            # Determine the final file path
+            if download_path.is_dir() or str(download_path).endswith('/'):
+                # If download_path is a directory, use the original filename
+                final_path = download_path / file.file_name
+            else:
+                # If download_path includes a filename, use it as-is
+                final_path = download_path
+            
+            # Create parent directories if needed
+            if create_dirs:
+                final_path.parent.mkdir(parents=True, exist_ok=True)
+            elif not final_path.parent.exists():
+                raise FileNotFoundError(f"Parent directory does not exist: {final_path.parent}")
+            
+            # Download the file using the signed URL
+            response = requests.get(file.signed_url, timeout=timeout, stream=True)
+            response.raise_for_status()
+            
+            # Verify content length if available
+            expected_size = file.file_size
+            content_length = response.headers.get('content-length')
+            if content_length and int(content_length) != expected_size:
+                raise AsteroidAPIError(
+                    f"Content length mismatch: expected {expected_size}, got {content_length}"
+                )
+            
+            # Write the file in chunks to handle large files efficiently
+            chunk_size = 8192
+            total_size = 0
+            
+            with open(final_path, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=chunk_size):
+                    if chunk:  # Filter out keep-alive chunks
+                        f.write(chunk)
+                        total_size += len(chunk)
+            
+            # Final verification of the downloaded file size
+            if total_size != expected_size:
+                raise AsteroidAPIError(
+                    f"Downloaded file size mismatch: expected {expected_size}, got {total_size}"
+                )
+            
+            return str(final_path)
+            
+        except requests.exceptions.RequestException as e:
+            # Clean up partial file on network error
+            if final_path and final_path.exists():
+                final_path.unlink(missing_ok=True)
+            raise AsteroidAPIError(f"Failed to download file {file.file_name}: {e}") from e
+        except OSError as e:
+            # Clean up partial file on I/O error
+            if final_path and final_path.exists():
+                final_path.unlink(missing_ok=True)
+            raise AsteroidAPIError(f"Failed to save file {file.file_name}: {e}") from e
+        except AsteroidAPIError:
+            # Clean up partial file on size mismatch or other API errors
+            if final_path and final_path.exists():
+                final_path.unlink(missing_ok=True)
+            raise
+        except Exception as e:
+            # Clean up partial file on unexpected error
+            if final_path and final_path.exists():
+                final_path.unlink(missing_ok=True)
+            raise AsteroidAPIError(f"Unexpected error downloading file {file.file_name}: {e}") from e
 
 # Convenience functions that mirror the TypeScript SDK pattern
 def create_client(api_key: str, base_url: Optional[str] = None) -> AsteroidClient:
@@ -1113,6 +1233,56 @@ def add_message_to_execution(client: AsteroidClient, execution_id: str, message:
     """
     return client.add_message_to_execution(execution_id, message)
 
+def get_execution_files(client: AsteroidClient, execution_id: str) -> List[File]:
+    """
+    Get a list of files associated with an execution.
+    Args:
+        client: The AsteroidClient instance
+        execution_id: The execution identifier
+    Returns:
+        A list of files associated with the execution
+    Raises:
+        Exception: If the files request fails
+    Example:
+        files = get_execution_files(client, "execution_id")
+        for file in files:
+            print(f"File: {file.file_name}, Size: {file.file_size}")
+    """
+    return client.get_execution_files(execution_id)
+
+def download_execution_file(client: AsteroidClient, file: File, download_path: Union[str, Path], 
+                          create_dirs: bool = True, timeout: int = 30) -> str:
+    """
+    Download a file from an execution using its signed URL.
+    
+    Args:
+        client: The AsteroidClient instance
+        file: The File object containing the signed URL and metadata
+        download_path: Path where the file should be saved. Can be a directory or full file path
+        create_dirs: Whether to create parent directories if they don't exist (default: True)
+        timeout: Request timeout in seconds (default: 30)
+        
+    Returns:
+        The full path where the file was saved
+        
+    Raises:
+        AsteroidAPIError: If the download fails
+        FileNotFoundError: If the parent directory doesn't exist and create_dirs is False
+        
+    Example:
+        files = get_execution_files(client, "execution_id")
+        for file in files:
+            # Download to specific directory
+            saved_path = download_execution_file(client, file, "/path/to/downloads/")
+            print(f"Downloaded {file.file_name} to {saved_path}")
+            
+            # Download with specific filename
+            saved_path = download_execution_file(client, file, "/path/to/downloads/my_file.txt")
+            print(f"Downloaded to {saved_path}")
+    """
+    return client.download_execution_file(file, download_path, create_dirs, timeout)
+
+
 
 def wait_for_agent_interaction(
     client: AsteroidClient,
@@ -1184,6 +1354,8 @@ __all__ = [
     'delete_agent_profile',
     'get_last_n_execution_activities',
     'add_message_to_execution',
+    'get_execution_files',
+    'download_execution_file',
     'interactive_agent',
     'wait_for_agent_interaction',
     'get_credentials_public_key',

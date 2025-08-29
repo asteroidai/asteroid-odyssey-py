@@ -209,7 +209,7 @@ conf = asteroid_odyssey.agents_v2_gen.Configuration(
     ) -> None:
         """Constructor
         """
-        self._base_path = "https://odyssey.asteroid.ai/agents/frontend" if host is None else host
+        self._base_path = "https://odyssey.asteroid.ai/agents/v2" if host is None else host
         """Default Base url
         """
         self.server_index = 0 if server_index is None and host is None else server_index
@@ -546,7 +546,7 @@ conf = asteroid_odyssey.agents_v2_gen.Configuration(
                 'variables': {
                     'version': {
                         'description': "No description provided",
-                        'default_value': "",
+                        'default_value': "v2",
                         'enum_values': [
                             "frontend",
                             "v2"

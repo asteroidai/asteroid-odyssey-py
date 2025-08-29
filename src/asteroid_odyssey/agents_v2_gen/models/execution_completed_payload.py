@@ -17,19 +17,27 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, Field, StrictStr
-from typing import Any, ClassVar, Dict, List
-from uuid import UUID
+from pydantic import BaseModel, ConfigDict, StrictStr, field_validator
+from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
 
-class ExecutionActivityUserMessageReceivedPayload(BaseModel):
+class ExecutionCompletedPayload(BaseModel):
     """
-    ExecutionActivityUserMessageReceivedPayload
+    ExecutionCompletedPayload
     """ # noqa: E501
-    message: StrictStr
-    user_uuid: UUID = Field(alias="userUUID")
-    __properties: ClassVar[List[str]] = ["message", "userUUID"]
+    final_answer: Optional[StrictStr] = None
+    outcome: StrictStr
+    reasoning: StrictStr
+    result: Optional[Any]
+    __properties: ClassVar[List[str]] = ["final_answer", "outcome", "reasoning", "result"]
+
+    @field_validator('outcome')
+    def outcome_validate_enum(cls, value):
+        """Validates the enum"""
+        if value not in set(['success', 'failure']):
+            raise ValueError("must be one of enum values ('success', 'failure')")
+        return value
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -49,7 +57,7 @@ class ExecutionActivityUserMessageReceivedPayload(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of ExecutionActivityUserMessageReceivedPayload from a JSON string"""
+        """Create an instance of ExecutionCompletedPayload from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -70,11 +78,16 @@ class ExecutionActivityUserMessageReceivedPayload(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # set to None if result (nullable) is None
+        # and model_fields_set contains the field
+        if self.result is None and "result" in self.model_fields_set:
+            _dict['result'] = None
+
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of ExecutionActivityUserMessageReceivedPayload from a dict"""
+        """Create an instance of ExecutionCompletedPayload from a dict"""
         if obj is None:
             return None
 
@@ -82,8 +95,10 @@ class ExecutionActivityUserMessageReceivedPayload(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "message": obj.get("message"),
-            "userUUID": obj.get("userUUID")
+            "final_answer": obj.get("final_answer"),
+            "outcome": obj.get("outcome"),
+            "reasoning": obj.get("reasoning"),
+            "result": obj.get("result")
         })
         return _obj
 

@@ -17,19 +17,17 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, Field, StrictStr
+from pydantic import BaseModel, ConfigDict, StrictStr
 from typing import Any, ClassVar, Dict, List
-from uuid import UUID
 from typing import Optional, Set
 from typing_extensions import Self
 
-class ExecutionActivityUserMessageReceivedPayload(BaseModel):
+class ExecutionFailedPayload(BaseModel):
     """
-    ExecutionActivityUserMessageReceivedPayload
+    ExecutionFailedPayload
     """ # noqa: E501
-    message: StrictStr
-    user_uuid: UUID = Field(alias="userUUID")
-    __properties: ClassVar[List[str]] = ["message", "userUUID"]
+    reason: StrictStr
+    __properties: ClassVar[List[str]] = ["reason"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -49,7 +47,7 @@ class ExecutionActivityUserMessageReceivedPayload(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of ExecutionActivityUserMessageReceivedPayload from a JSON string"""
+        """Create an instance of ExecutionFailedPayload from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -74,7 +72,7 @@ class ExecutionActivityUserMessageReceivedPayload(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of ExecutionActivityUserMessageReceivedPayload from a dict"""
+        """Create an instance of ExecutionFailedPayload from a dict"""
         if obj is None:
             return None
 
@@ -82,8 +80,7 @@ class ExecutionActivityUserMessageReceivedPayload(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "message": obj.get("message"),
-            "userUUID": obj.get("userUUID")
+            "reason": obj.get("reason")
         })
         return _obj
 

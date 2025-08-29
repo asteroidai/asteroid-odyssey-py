@@ -19,6 +19,7 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictStr
 from typing import Any, ClassVar, Dict, List
+from uuid import UUID
 from typing import Optional, Set
 from typing_extensions import Self
 
@@ -27,7 +28,7 @@ class ExecutionActivityTransitionedNodePayload(BaseModel):
     ExecutionActivityTransitionedNodePayload
     """ # noqa: E501
     new_node_name: StrictStr = Field(alias="newNodeName")
-    new_node_uuid: StrictStr = Field(alias="newNodeUUID")
+    new_node_uuid: UUID = Field(alias="newNodeUUID")
     __properties: ClassVar[List[str]] = ["newNodeName", "newNodeUUID"]
 
     model_config = ConfigDict(
