@@ -18,8 +18,9 @@ import re  # noqa: F401
 import json
 
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict, Field, StrictStr
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Any, ClassVar, Dict, List
+from uuid import UUID
 from asteroid_odyssey.agents_v2_gen.models.execution_activity_payload_union import ExecutionActivityPayloadUnion
 from typing import Optional, Set
 from typing_extensions import Self
@@ -28,8 +29,8 @@ class ExecutionActivity(BaseModel):
     """
     ExecutionActivity
     """ # noqa: E501
-    execution_id: StrictStr = Field(alias="executionId")
-    id: StrictStr
+    execution_id: UUID = Field(alias="executionId")
+    id: UUID
     payload: ExecutionActivityPayloadUnion
     timestamp: datetime
     __properties: ClassVar[List[str]] = ["executionId", "id", "payload", "timestamp"]
