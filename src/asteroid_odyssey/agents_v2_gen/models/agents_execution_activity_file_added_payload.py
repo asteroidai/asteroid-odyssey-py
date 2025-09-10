@@ -17,25 +17,28 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, Field, StrictStr, field_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr, field_validator
 from typing import Any, ClassVar, Dict, List
-from asteroid_odyssey.agents_v2_gen.models.agents_execution_activity_step_started_payload import AgentsExecutionActivityStepStartedPayload
 from typing import Optional, Set
 from typing_extensions import Self
 
-class ActivityPayloadUnionStepStarted(BaseModel):
+class AgentsExecutionActivityFileAddedPayload(BaseModel):
     """
-    ActivityPayloadUnionStepStarted
+    AgentsExecutionActivityFileAddedPayload
     """ # noqa: E501
-    activity_type: StrictStr = Field(alias="activityType")
-    data: AgentsExecutionActivityStepStartedPayload
-    __properties: ClassVar[List[str]] = ["activityType", "data"]
+    file_id: StrictStr = Field(alias="fileId")
+    file_name: StrictStr = Field(alias="fileName")
+    file_size: StrictInt = Field(alias="fileSize")
+    mime_type: StrictStr = Field(alias="mimeType")
+    presigned_url: StrictStr = Field(alias="presignedUrl")
+    source: StrictStr
+    __properties: ClassVar[List[str]] = ["fileId", "fileName", "fileSize", "mimeType", "presignedUrl", "source"]
 
-    @field_validator('activity_type')
-    def activity_type_validate_enum(cls, value):
+    @field_validator('source')
+    def source_validate_enum(cls, value):
         """Validates the enum"""
-        if value not in set(['step_started']):
-            raise ValueError("must be one of enum values ('step_started')")
+        if value not in set(['upload', 'download']):
+            raise ValueError("must be one of enum values ('upload', 'download')")
         return value
 
     model_config = ConfigDict(
@@ -56,7 +59,7 @@ class ActivityPayloadUnionStepStarted(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of ActivityPayloadUnionStepStarted from a JSON string"""
+        """Create an instance of AgentsExecutionActivityFileAddedPayload from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -77,14 +80,11 @@ class ActivityPayloadUnionStepStarted(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of data
-        if self.data:
-            _dict['data'] = self.data.to_dict()
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of ActivityPayloadUnionStepStarted from a dict"""
+        """Create an instance of AgentsExecutionActivityFileAddedPayload from a dict"""
         if obj is None:
             return None
 
@@ -92,8 +92,12 @@ class ActivityPayloadUnionStepStarted(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "activityType": obj.get("activityType"),
-            "data": AgentsExecutionActivityStepStartedPayload.from_dict(obj["data"]) if obj.get("data") is not None else None
+            "fileId": obj.get("fileId"),
+            "fileName": obj.get("fileName"),
+            "fileSize": obj.get("fileSize"),
+            "mimeType": obj.get("mimeType"),
+            "presignedUrl": obj.get("presignedUrl"),
+            "source": obj.get("source")
         })
         return _obj
 

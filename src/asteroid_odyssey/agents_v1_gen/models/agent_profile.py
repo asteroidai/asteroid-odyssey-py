@@ -19,7 +19,7 @@ import json
 
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
-from typing import Any, ClassVar, Dict, List
+from typing import Any, ClassVar, Dict, List, Optional
 from asteroid_odyssey.agents_v1_gen.models.cookie import Cookie
 from asteroid_odyssey.agents_v1_gen.models.country_code import CountryCode
 from asteroid_odyssey.agents_v1_gen.models.credential import Credential
@@ -35,8 +35,8 @@ class AgentProfile(BaseModel):
     name: StrictStr = Field(description="Name of the agent profile (unique within organization)")
     description: StrictStr = Field(description="Description of the agent profile")
     organization_id: StrictStr = Field(description="The ID of the organization that the agent profile belongs to")
-    proxy_cc: CountryCode
-    proxy_type: ProxyType
+    proxy_cc: Optional[CountryCode] = None
+    proxy_type: Optional[ProxyType] = None
     captcha_solver_active: StrictBool = Field(description="Whether the captcha solver is active for this profile")
     sticky_ip: StrictBool = Field(description="Whether the same IP address should be used for all executions of this profile")
     credentials: List[Credential] = Field(description="List of credentials associated with this agent profile")
