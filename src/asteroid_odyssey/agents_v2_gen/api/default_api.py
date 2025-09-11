@@ -19,9 +19,12 @@ from typing_extensions import Annotated
 from pydantic import Field, StrictBytes, StrictInt, StrictStr, field_validator
 from typing import List, Optional, Tuple, Union
 from typing_extensions import Annotated
+from asteroid_odyssey.agents_v2_gen.models.agent_list200_response import AgentList200Response
+from asteroid_odyssey.agents_v2_gen.models.agents_agent_sort_field import AgentsAgentSortField
 from asteroid_odyssey.agents_v2_gen.models.agents_execution_activity import AgentsExecutionActivity
 from asteroid_odyssey.agents_v2_gen.models.agents_execution_user_messages_add_text_body import AgentsExecutionUserMessagesAddTextBody
 from asteroid_odyssey.agents_v2_gen.models.agents_files_file import AgentsFilesFile
+from asteroid_odyssey.agents_v2_gen.models.common_sort_direction import CommonSortDirection
 
 from asteroid_odyssey.agents_v2_gen.api_client import ApiClient, RequestSerialized
 from asteroid_odyssey.agents_v2_gen.api_response import ApiResponse
@@ -39,6 +42,351 @@ class DefaultApi:
         if api_client is None:
             api_client = ApiClient.get_default()
         self.api_client = api_client
+
+
+    @validate_call
+    def agent_list(
+        self,
+        page_size: StrictInt,
+        page: StrictInt,
+        organization_id: Optional[StrictStr] = None,
+        search_name: Optional[StrictStr] = None,
+        sort_field: Optional[AgentsAgentSortField] = None,
+        sort_direction: Optional[CommonSortDirection] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> AgentList200Response:
+        """agent_list
+
+
+        :param page_size: (required)
+        :type page_size: int
+        :param page: (required)
+        :type page: int
+        :param organization_id:
+        :type organization_id: str
+        :param search_name:
+        :type search_name: str
+        :param sort_field:
+        :type sort_field: AgentsAgentSortField
+        :param sort_direction:
+        :type sort_direction: CommonSortDirection
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._agent_list_serialize(
+            page_size=page_size,
+            page=page,
+            organization_id=organization_id,
+            search_name=search_name,
+            sort_field=sort_field,
+            sort_direction=sort_direction,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "AgentList200Response",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    def agent_list_with_http_info(
+        self,
+        page_size: StrictInt,
+        page: StrictInt,
+        organization_id: Optional[StrictStr] = None,
+        search_name: Optional[StrictStr] = None,
+        sort_field: Optional[AgentsAgentSortField] = None,
+        sort_direction: Optional[CommonSortDirection] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[AgentList200Response]:
+        """agent_list
+
+
+        :param page_size: (required)
+        :type page_size: int
+        :param page: (required)
+        :type page: int
+        :param organization_id:
+        :type organization_id: str
+        :param search_name:
+        :type search_name: str
+        :param sort_field:
+        :type sort_field: AgentsAgentSortField
+        :param sort_direction:
+        :type sort_direction: CommonSortDirection
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._agent_list_serialize(
+            page_size=page_size,
+            page=page,
+            organization_id=organization_id,
+            search_name=search_name,
+            sort_field=sort_field,
+            sort_direction=sort_direction,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "AgentList200Response",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    def agent_list_without_preload_content(
+        self,
+        page_size: StrictInt,
+        page: StrictInt,
+        organization_id: Optional[StrictStr] = None,
+        search_name: Optional[StrictStr] = None,
+        sort_field: Optional[AgentsAgentSortField] = None,
+        sort_direction: Optional[CommonSortDirection] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """agent_list
+
+
+        :param page_size: (required)
+        :type page_size: int
+        :param page: (required)
+        :type page: int
+        :param organization_id:
+        :type organization_id: str
+        :param search_name:
+        :type search_name: str
+        :param sort_field:
+        :type sort_field: AgentsAgentSortField
+        :param sort_direction:
+        :type sort_direction: CommonSortDirection
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._agent_list_serialize(
+            page_size=page_size,
+            page=page,
+            organization_id=organization_id,
+            search_name=search_name,
+            sort_field=sort_field,
+            sort_direction=sort_direction,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "AgentList200Response",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _agent_list_serialize(
+        self,
+        page_size,
+        page,
+        organization_id,
+        search_name,
+        sort_field,
+        sort_direction,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        # process the query parameters
+        if organization_id is not None:
+            
+            _query_params.append(('organizationId', organization_id))
+            
+        if page_size is not None:
+            
+            _query_params.append(('pageSize', page_size))
+            
+        if page is not None:
+            
+            _query_params.append(('page', page))
+            
+        if search_name is not None:
+            
+            _query_params.append(('searchName', search_name))
+            
+        if sort_field is not None:
+            
+            _query_params.append(('sort_field', sort_field.value))
+            
+        if sort_direction is not None:
+            
+            _query_params.append(('sort_direction', sort_direction.value))
+            
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
+
+
+        # authentication setting
+        _auth_settings: List[str] = [
+            'ApiKeyAuth'
+        ]
+
+        return self.api_client.param_serialize(
+            method='GET',
+            resource_path='/agents',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
 
 
     @validate_call
