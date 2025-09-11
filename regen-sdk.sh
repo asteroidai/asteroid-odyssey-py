@@ -16,7 +16,7 @@ PKG_NAMES=(
   "asteroid_odyssey.agents_v2_gen"
 )
 
-GENERATOR_VERSION="v2.4.1"
+GENERATOR_VERSION="v2.23.1"
 GENERATOR_CLI="@openapitools/openapi-generator-cli@${GENERATOR_VERSION}"
 TMP_DIR=".openapi-build"
 
@@ -78,7 +78,7 @@ for i in "${!API_SPEC_URLS[@]}"; do
   fi
 done
 
-rm -f openapitools.json || true
+# rm -f openapitools.json || true  # Keep openapitools.json to pin generator version
 
 echo "🧹 Removing temporary build directory ..."
 rm -rf "${TMP_DIR}"
