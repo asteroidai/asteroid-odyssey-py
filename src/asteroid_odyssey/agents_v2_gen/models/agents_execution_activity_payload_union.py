@@ -22,6 +22,7 @@ from asteroid_odyssey.agents_v2_gen.models.activity_payload_union_action_failed 
 from asteroid_odyssey.agents_v2_gen.models.activity_payload_union_action_started import ActivityPayloadUnionActionStarted
 from asteroid_odyssey.agents_v2_gen.models.activity_payload_union_file_added import ActivityPayloadUnionFileAdded
 from asteroid_odyssey.agents_v2_gen.models.activity_payload_union_generic import ActivityPayloadUnionGeneric
+from asteroid_odyssey.agents_v2_gen.models.activity_payload_union_graph_updated import ActivityPayloadUnionGraphUpdated
 from asteroid_odyssey.agents_v2_gen.models.activity_payload_union_status_changed import ActivityPayloadUnionStatusChanged
 from asteroid_odyssey.agents_v2_gen.models.activity_payload_union_step_completed import ActivityPayloadUnionStepCompleted
 from asteroid_odyssey.agents_v2_gen.models.activity_payload_union_step_started import ActivityPayloadUnionStepStarted
@@ -32,7 +33,7 @@ from pydantic import StrictStr, Field
 from typing import Union, List, Set, Optional, Dict
 from typing_extensions import Literal, Self
 
-AGENTSEXECUTIONACTIVITYPAYLOADUNION_ONE_OF_SCHEMAS = ["ActivityPayloadUnionActionCompleted", "ActivityPayloadUnionActionFailed", "ActivityPayloadUnionActionStarted", "ActivityPayloadUnionFileAdded", "ActivityPayloadUnionGeneric", "ActivityPayloadUnionStatusChanged", "ActivityPayloadUnionStepCompleted", "ActivityPayloadUnionStepStarted", "ActivityPayloadUnionTerminal", "ActivityPayloadUnionTransitionedNode", "ActivityPayloadUnionUserMessageReceived"]
+AGENTSEXECUTIONACTIVITYPAYLOADUNION_ONE_OF_SCHEMAS = ["ActivityPayloadUnionActionCompleted", "ActivityPayloadUnionActionFailed", "ActivityPayloadUnionActionStarted", "ActivityPayloadUnionFileAdded", "ActivityPayloadUnionGeneric", "ActivityPayloadUnionGraphUpdated", "ActivityPayloadUnionStatusChanged", "ActivityPayloadUnionStepCompleted", "ActivityPayloadUnionStepStarted", "ActivityPayloadUnionTerminal", "ActivityPayloadUnionTransitionedNode", "ActivityPayloadUnionUserMessageReceived"]
 
 class AgentsExecutionActivityPayloadUnion(BaseModel):
     """
@@ -60,8 +61,10 @@ class AgentsExecutionActivityPayloadUnion(BaseModel):
     oneof_schema_10_validator: Optional[ActivityPayloadUnionUserMessageReceived] = None
     # data type: ActivityPayloadUnionFileAdded
     oneof_schema_11_validator: Optional[ActivityPayloadUnionFileAdded] = None
-    actual_instance: Optional[Union[ActivityPayloadUnionActionCompleted, ActivityPayloadUnionActionFailed, ActivityPayloadUnionActionStarted, ActivityPayloadUnionFileAdded, ActivityPayloadUnionGeneric, ActivityPayloadUnionStatusChanged, ActivityPayloadUnionStepCompleted, ActivityPayloadUnionStepStarted, ActivityPayloadUnionTerminal, ActivityPayloadUnionTransitionedNode, ActivityPayloadUnionUserMessageReceived]] = None
-    one_of_schemas: Set[str] = { "ActivityPayloadUnionActionCompleted", "ActivityPayloadUnionActionFailed", "ActivityPayloadUnionActionStarted", "ActivityPayloadUnionFileAdded", "ActivityPayloadUnionGeneric", "ActivityPayloadUnionStatusChanged", "ActivityPayloadUnionStepCompleted", "ActivityPayloadUnionStepStarted", "ActivityPayloadUnionTerminal", "ActivityPayloadUnionTransitionedNode", "ActivityPayloadUnionUserMessageReceived" }
+    # data type: ActivityPayloadUnionGraphUpdated
+    oneof_schema_12_validator: Optional[ActivityPayloadUnionGraphUpdated] = None
+    actual_instance: Optional[Union[ActivityPayloadUnionActionCompleted, ActivityPayloadUnionActionFailed, ActivityPayloadUnionActionStarted, ActivityPayloadUnionFileAdded, ActivityPayloadUnionGeneric, ActivityPayloadUnionGraphUpdated, ActivityPayloadUnionStatusChanged, ActivityPayloadUnionStepCompleted, ActivityPayloadUnionStepStarted, ActivityPayloadUnionTerminal, ActivityPayloadUnionTransitionedNode, ActivityPayloadUnionUserMessageReceived]] = None
+    one_of_schemas: Set[str] = { "ActivityPayloadUnionActionCompleted", "ActivityPayloadUnionActionFailed", "ActivityPayloadUnionActionStarted", "ActivityPayloadUnionFileAdded", "ActivityPayloadUnionGeneric", "ActivityPayloadUnionGraphUpdated", "ActivityPayloadUnionStatusChanged", "ActivityPayloadUnionStepCompleted", "ActivityPayloadUnionStepStarted", "ActivityPayloadUnionTerminal", "ActivityPayloadUnionTransitionedNode", "ActivityPayloadUnionUserMessageReceived" }
 
     model_config = ConfigDict(
         validate_assignment=True,
@@ -142,12 +145,17 @@ class AgentsExecutionActivityPayloadUnion(BaseModel):
             error_messages.append(f"Error! Input type `{type(v)}` is not `ActivityPayloadUnionFileAdded`")
         else:
             match += 1
+        # validate data type: ActivityPayloadUnionGraphUpdated
+        if not isinstance(v, ActivityPayloadUnionGraphUpdated):
+            error_messages.append(f"Error! Input type `{type(v)}` is not `ActivityPayloadUnionGraphUpdated`")
+        else:
+            match += 1
         if match > 1:
             # more than 1 match
-            raise ValueError("Multiple matches found when setting `actual_instance` in AgentsExecutionActivityPayloadUnion with oneOf schemas: ActivityPayloadUnionActionCompleted, ActivityPayloadUnionActionFailed, ActivityPayloadUnionActionStarted, ActivityPayloadUnionFileAdded, ActivityPayloadUnionGeneric, ActivityPayloadUnionStatusChanged, ActivityPayloadUnionStepCompleted, ActivityPayloadUnionStepStarted, ActivityPayloadUnionTerminal, ActivityPayloadUnionTransitionedNode, ActivityPayloadUnionUserMessageReceived. Details: " + ", ".join(error_messages))
+            raise ValueError("Multiple matches found when setting `actual_instance` in AgentsExecutionActivityPayloadUnion with oneOf schemas: ActivityPayloadUnionActionCompleted, ActivityPayloadUnionActionFailed, ActivityPayloadUnionActionStarted, ActivityPayloadUnionFileAdded, ActivityPayloadUnionGeneric, ActivityPayloadUnionGraphUpdated, ActivityPayloadUnionStatusChanged, ActivityPayloadUnionStepCompleted, ActivityPayloadUnionStepStarted, ActivityPayloadUnionTerminal, ActivityPayloadUnionTransitionedNode, ActivityPayloadUnionUserMessageReceived. Details: " + ", ".join(error_messages))
         elif match == 0:
             # no match
-            raise ValueError("No match found when setting `actual_instance` in AgentsExecutionActivityPayloadUnion with oneOf schemas: ActivityPayloadUnionActionCompleted, ActivityPayloadUnionActionFailed, ActivityPayloadUnionActionStarted, ActivityPayloadUnionFileAdded, ActivityPayloadUnionGeneric, ActivityPayloadUnionStatusChanged, ActivityPayloadUnionStepCompleted, ActivityPayloadUnionStepStarted, ActivityPayloadUnionTerminal, ActivityPayloadUnionTransitionedNode, ActivityPayloadUnionUserMessageReceived. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when setting `actual_instance` in AgentsExecutionActivityPayloadUnion with oneOf schemas: ActivityPayloadUnionActionCompleted, ActivityPayloadUnionActionFailed, ActivityPayloadUnionActionStarted, ActivityPayloadUnionFileAdded, ActivityPayloadUnionGeneric, ActivityPayloadUnionGraphUpdated, ActivityPayloadUnionStatusChanged, ActivityPayloadUnionStepCompleted, ActivityPayloadUnionStepStarted, ActivityPayloadUnionTerminal, ActivityPayloadUnionTransitionedNode, ActivityPayloadUnionUserMessageReceived. Details: " + ", ".join(error_messages))
         else:
             return v
 
@@ -228,13 +236,19 @@ class AgentsExecutionActivityPayloadUnion(BaseModel):
             match += 1
         except (ValidationError, ValueError) as e:
             error_messages.append(str(e))
+        # deserialize data into ActivityPayloadUnionGraphUpdated
+        try:
+            instance.actual_instance = ActivityPayloadUnionGraphUpdated.from_json(json_str)
+            match += 1
+        except (ValidationError, ValueError) as e:
+            error_messages.append(str(e))
 
         if match > 1:
             # more than 1 match
-            raise ValueError("Multiple matches found when deserializing the JSON string into AgentsExecutionActivityPayloadUnion with oneOf schemas: ActivityPayloadUnionActionCompleted, ActivityPayloadUnionActionFailed, ActivityPayloadUnionActionStarted, ActivityPayloadUnionFileAdded, ActivityPayloadUnionGeneric, ActivityPayloadUnionStatusChanged, ActivityPayloadUnionStepCompleted, ActivityPayloadUnionStepStarted, ActivityPayloadUnionTerminal, ActivityPayloadUnionTransitionedNode, ActivityPayloadUnionUserMessageReceived. Details: " + ", ".join(error_messages))
+            raise ValueError("Multiple matches found when deserializing the JSON string into AgentsExecutionActivityPayloadUnion with oneOf schemas: ActivityPayloadUnionActionCompleted, ActivityPayloadUnionActionFailed, ActivityPayloadUnionActionStarted, ActivityPayloadUnionFileAdded, ActivityPayloadUnionGeneric, ActivityPayloadUnionGraphUpdated, ActivityPayloadUnionStatusChanged, ActivityPayloadUnionStepCompleted, ActivityPayloadUnionStepStarted, ActivityPayloadUnionTerminal, ActivityPayloadUnionTransitionedNode, ActivityPayloadUnionUserMessageReceived. Details: " + ", ".join(error_messages))
         elif match == 0:
             # no match
-            raise ValueError("No match found when deserializing the JSON string into AgentsExecutionActivityPayloadUnion with oneOf schemas: ActivityPayloadUnionActionCompleted, ActivityPayloadUnionActionFailed, ActivityPayloadUnionActionStarted, ActivityPayloadUnionFileAdded, ActivityPayloadUnionGeneric, ActivityPayloadUnionStatusChanged, ActivityPayloadUnionStepCompleted, ActivityPayloadUnionStepStarted, ActivityPayloadUnionTerminal, ActivityPayloadUnionTransitionedNode, ActivityPayloadUnionUserMessageReceived. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when deserializing the JSON string into AgentsExecutionActivityPayloadUnion with oneOf schemas: ActivityPayloadUnionActionCompleted, ActivityPayloadUnionActionFailed, ActivityPayloadUnionActionStarted, ActivityPayloadUnionFileAdded, ActivityPayloadUnionGeneric, ActivityPayloadUnionGraphUpdated, ActivityPayloadUnionStatusChanged, ActivityPayloadUnionStepCompleted, ActivityPayloadUnionStepStarted, ActivityPayloadUnionTerminal, ActivityPayloadUnionTransitionedNode, ActivityPayloadUnionUserMessageReceived. Details: " + ", ".join(error_messages))
         else:
             return instance
 
@@ -248,7 +262,7 @@ class AgentsExecutionActivityPayloadUnion(BaseModel):
         else:
             return json.dumps(self.actual_instance)
 
-    def to_dict(self) -> Optional[Union[Dict[str, Any], ActivityPayloadUnionActionCompleted, ActivityPayloadUnionActionFailed, ActivityPayloadUnionActionStarted, ActivityPayloadUnionFileAdded, ActivityPayloadUnionGeneric, ActivityPayloadUnionStatusChanged, ActivityPayloadUnionStepCompleted, ActivityPayloadUnionStepStarted, ActivityPayloadUnionTerminal, ActivityPayloadUnionTransitionedNode, ActivityPayloadUnionUserMessageReceived]]:
+    def to_dict(self) -> Optional[Union[Dict[str, Any], ActivityPayloadUnionActionCompleted, ActivityPayloadUnionActionFailed, ActivityPayloadUnionActionStarted, ActivityPayloadUnionFileAdded, ActivityPayloadUnionGeneric, ActivityPayloadUnionGraphUpdated, ActivityPayloadUnionStatusChanged, ActivityPayloadUnionStepCompleted, ActivityPayloadUnionStepStarted, ActivityPayloadUnionTerminal, ActivityPayloadUnionTransitionedNode, ActivityPayloadUnionUserMessageReceived]]:
         """Returns the dict representation of the actual instance"""
         if self.actual_instance is None:
             return None

@@ -35,6 +35,8 @@ from .agents_v1_gen import (
 )
 from .agents_v1_gen.exceptions import ApiException
 from .agents_v2_gen import (
+    AgentsAgentBase as Agent,
+    AgentList200Response as AgentList200Response,
     Configuration as AgentsV2Configuration,
     ApiClient as AgentsV2ApiClient,
     DefaultApi as AgentsV2ExecutionApi,
@@ -767,6 +769,25 @@ class AsteroidClient:
 
     # --- V2 ---
 
+    def get_agents(self, org_id: str, page: int = 1, page_size: int = 100) -> List[Agent]:
+        """
+        Get a paginated list of agents for an organization.
+        Args:
+            org_id: The organization identifier
+            page: The page number
+            page_size: The page size
+        Returns:
+            A list of agents
+        Raises:
+            Exception: If the agents request fails
+        Example:
+            agents = client.get_agents("org_id", page=1, page_size=100)
+            for agent in agents:
+                print(f"Agent: {agent.name}")
+        """
+        response = self.agents_v2_execution_api.agent_list(organization_id=org_id, page=page, page_size=page_size)
+        return response.items
+
     def get_last_n_execution_activities(self, execution_id: str, n: int) -> List[ExecutionActivity]:
         """
         Get the last N execution activities for a given execution ID, sorted by their timestamp in descending order.
@@ -1174,6 +1195,25 @@ def get_credentials_public_key(client: AsteroidClient) -> str:
 
 # --- V2 ---
 
+def get_agents(client: AsteroidClient, org_id: str, page: int = 1, page_size: int = 100) -> List[Agent]:
+    """
+    Get a paginated list of agents for an organization.
+    Args:
+        client: The AsteroidClient instance
+        org_id: The organization identifier
+        page: The page number
+        page_size: The page size
+    Returns:
+        A list of agents
+    Raises:
+        Exception: If the agents request fails
+    Example:
+        agents = get_agents(client, "org_id", page=1, page_size=100)
+        for agent in agents:
+            print(f"Agent: {agent.name}")
+    """
+    response = client.get_agents(org_id, page, page_size)
+    return response.items
 def get_last_n_execution_activities(client: AsteroidClient, execution_id: str, n: int) -> List[ExecutionActivity]:
     """
     Get the last N execution activities for a given execution ID, sorted by their timestamp in descending order.
@@ -1325,6 +1365,7 @@ __all__ = [
     'create_agent_profile',
     'update_agent_profile',
     'delete_agent_profile',
+    'get_agents',
     'get_last_n_execution_activities',
     'add_message_to_execution',
     'get_execution_files',
