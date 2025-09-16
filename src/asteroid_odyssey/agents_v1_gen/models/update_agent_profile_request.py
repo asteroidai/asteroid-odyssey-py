@@ -41,7 +41,9 @@ class UpdateAgentProfileRequest(BaseModel):
     credentials_to_delete: Optional[List[StrictStr]] = Field(default=None, description="List of credential IDs to delete from the profile")
     cookies_to_add: Optional[List[Cookie]] = Field(default=None, description="List of cookies to add to the profile")
     cookies_to_delete: Optional[List[StrictStr]] = Field(default=None, description="List of cookie IDs to delete from the profile")
-    __properties: ClassVar[List[str]] = ["name", "description", "proxy_cc", "proxy_type", "captcha_solver_active", "sticky_ip", "credentials_to_add", "credentials_to_delete", "cookies_to_add", "cookies_to_delete"]
+    tracing_snapshots: Optional[StrictBool] = Field(default=True, description="Whether to enable tracing snapshots for the profile")
+    extra_stealth: Optional[StrictBool] = Field(default=False, description="Whether to enable extra stealth for the profile")
+    __properties: ClassVar[List[str]] = ["name", "description", "proxy_cc", "proxy_type", "captcha_solver_active", "sticky_ip", "credentials_to_add", "credentials_to_delete", "cookies_to_add", "cookies_to_delete", "tracing_snapshots", "extra_stealth"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -117,7 +119,9 @@ class UpdateAgentProfileRequest(BaseModel):
             "credentials_to_add": [Credential.from_dict(_item) for _item in obj["credentials_to_add"]] if obj.get("credentials_to_add") is not None else None,
             "credentials_to_delete": obj.get("credentials_to_delete"),
             "cookies_to_add": [Cookie.from_dict(_item) for _item in obj["cookies_to_add"]] if obj.get("cookies_to_add") is not None else None,
-            "cookies_to_delete": obj.get("cookies_to_delete")
+            "cookies_to_delete": obj.get("cookies_to_delete"),
+            "tracing_snapshots": obj.get("tracing_snapshots") if obj.get("tracing_snapshots") is not None else True,
+            "extra_stealth": obj.get("extra_stealth") if obj.get("extra_stealth") is not None else False
         })
         return _obj
 
