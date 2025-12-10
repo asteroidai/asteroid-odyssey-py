@@ -19,23 +19,22 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictStr, field_validator
 from typing import Any, ClassVar, Dict, List
-from asteroid_odyssey.agents_v2_gen.models.agents_execution_activity_generic_payload import AgentsExecutionActivityGenericPayload
 from typing import Optional, Set
 from typing_extensions import Self
 
-class ActivityPayloadUnionGeneric(BaseModel):
+class AgentsExecutionUtilGetDatetimeStartedDetails(BaseModel):
     """
-    ActivityPayloadUnionGeneric
+    AgentsExecutionUtilGetDatetimeStartedDetails
     """ # noqa: E501
-    activity_type: StrictStr = Field(alias="activityType")
-    data: AgentsExecutionActivityGenericPayload
-    __properties: ClassVar[List[str]] = ["activityType", "data"]
+    action_name: StrictStr = Field(alias="actionName")
+    tz_timezone_identifier: StrictStr = Field(alias="tzTimezoneIdentifier")
+    __properties: ClassVar[List[str]] = ["actionName", "tzTimezoneIdentifier"]
 
-    @field_validator('activity_type')
-    def activity_type_validate_enum(cls, value):
+    @field_validator('action_name')
+    def action_name_validate_enum(cls, value):
         """Validates the enum"""
-        if value not in set(['generic']):
-            raise ValueError("must be one of enum values ('generic')")
+        if value not in set(['util_get_datetime']):
+            raise ValueError("must be one of enum values ('util_get_datetime')")
         return value
 
     model_config = ConfigDict(
@@ -56,7 +55,7 @@ class ActivityPayloadUnionGeneric(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of ActivityPayloadUnionGeneric from a JSON string"""
+        """Create an instance of AgentsExecutionUtilGetDatetimeStartedDetails from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -77,14 +76,11 @@ class ActivityPayloadUnionGeneric(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of data
-        if self.data:
-            _dict['data'] = self.data.to_dict()
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of ActivityPayloadUnionGeneric from a dict"""
+        """Create an instance of AgentsExecutionUtilGetDatetimeStartedDetails from a dict"""
         if obj is None:
             return None
 
@@ -92,8 +88,8 @@ class ActivityPayloadUnionGeneric(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "activityType": obj.get("activityType"),
-            "data": AgentsExecutionActivityGenericPayload.from_dict(obj["data"]) if obj.get("data") is not None else None
+            "actionName": obj.get("actionName"),
+            "tzTimezoneIdentifier": obj.get("tzTimezoneIdentifier")
         })
         return _obj
 

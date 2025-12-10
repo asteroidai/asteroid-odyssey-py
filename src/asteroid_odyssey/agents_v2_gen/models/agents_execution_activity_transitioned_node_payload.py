@@ -17,8 +17,9 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, Field, StrictStr
-from typing import Any, ClassVar, Dict, List
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr, field_validator
+from typing import Any, ClassVar, Dict, List, Optional
+from asteroid_odyssey.agents_v2_gen.models.agents_graph_models_transitions_transition_type import AgentsGraphModelsTransitionsTransitionType
 from typing import Optional, Set
 from typing_extensions import Self
 
@@ -26,9 +27,20 @@ class AgentsExecutionActivityTransitionedNodePayload(BaseModel):
     """
     AgentsExecutionActivityTransitionedNodePayload
     """ # noqa: E501
+    activity_type: StrictStr = Field(alias="activityType")
+    from_node_duration: Optional[StrictInt] = Field(default=None, alias="fromNodeDuration")
     new_node_name: StrictStr = Field(alias="newNodeName")
+    new_node_type: StrictStr = Field(alias="newNodeType")
     new_node_uuid: StrictStr = Field(alias="newNodeUUID")
-    __properties: ClassVar[List[str]] = ["newNodeName", "newNodeUUID"]
+    transition_type: Optional[AgentsGraphModelsTransitionsTransitionType] = Field(default=None, alias="transitionType")
+    __properties: ClassVar[List[str]] = ["activityType", "fromNodeDuration", "newNodeName", "newNodeType", "newNodeUUID", "transitionType"]
+
+    @field_validator('activity_type')
+    def activity_type_validate_enum(cls, value):
+        """Validates the enum"""
+        if value not in set(['transitioned_node']):
+            raise ValueError("must be one of enum values ('transitioned_node')")
+        return value
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -81,8 +93,12 @@ class AgentsExecutionActivityTransitionedNodePayload(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
+            "activityType": obj.get("activityType"),
+            "fromNodeDuration": obj.get("fromNodeDuration"),
             "newNodeName": obj.get("newNodeName"),
-            "newNodeUUID": obj.get("newNodeUUID")
+            "newNodeType": obj.get("newNodeType"),
+            "newNodeUUID": obj.get("newNodeUUID"),
+            "transitionType": obj.get("transitionType")
         })
         return _obj
 

@@ -17,25 +17,25 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, Field, StrictStr, field_validator
-from typing import Any, ClassVar, Dict, List
-from asteroid_odyssey.agents_v2_gen.models.agents_execution_activity_graph_updated_payload import AgentsExecutionActivityGraphUpdatedPayload
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr, field_validator
+from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
 
-class ActivityPayloadUnionGraphUpdated(BaseModel):
+class AgentsExecutionScratchpadReadCompletedDetails(BaseModel):
     """
-    ActivityPayloadUnionGraphUpdated
+    AgentsExecutionScratchpadReadCompletedDetails
     """ # noqa: E501
-    activity_type: StrictStr = Field(alias="activityType")
-    data: AgentsExecutionActivityGraphUpdatedPayload
-    __properties: ClassVar[List[str]] = ["activityType", "data"]
+    action_name: StrictStr = Field(alias="actionName")
+    content: Optional[StrictStr] = None
+    content_truncated: Optional[StrictBool] = Field(default=None, alias="contentTruncated")
+    __properties: ClassVar[List[str]] = ["actionName", "content", "contentTruncated"]
 
-    @field_validator('activity_type')
-    def activity_type_validate_enum(cls, value):
+    @field_validator('action_name')
+    def action_name_validate_enum(cls, value):
         """Validates the enum"""
-        if value not in set(['graph_updated']):
-            raise ValueError("must be one of enum values ('graph_updated')")
+        if value not in set(['scratchpad_read']):
+            raise ValueError("must be one of enum values ('scratchpad_read')")
         return value
 
     model_config = ConfigDict(
@@ -56,7 +56,7 @@ class ActivityPayloadUnionGraphUpdated(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of ActivityPayloadUnionGraphUpdated from a JSON string"""
+        """Create an instance of AgentsExecutionScratchpadReadCompletedDetails from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -77,14 +77,11 @@ class ActivityPayloadUnionGraphUpdated(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of data
-        if self.data:
-            _dict['data'] = self.data.to_dict()
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of ActivityPayloadUnionGraphUpdated from a dict"""
+        """Create an instance of AgentsExecutionScratchpadReadCompletedDetails from a dict"""
         if obj is None:
             return None
 
@@ -92,8 +89,9 @@ class ActivityPayloadUnionGraphUpdated(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "activityType": obj.get("activityType"),
-            "data": AgentsExecutionActivityGraphUpdatedPayload.from_dict(obj["data"]) if obj.get("data") is not None else None
+            "actionName": obj.get("actionName"),
+            "content": obj.get("content"),
+            "contentTruncated": obj.get("contentTruncated")
         })
         return _obj
 

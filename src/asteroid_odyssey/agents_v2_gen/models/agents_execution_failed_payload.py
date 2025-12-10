@@ -18,7 +18,8 @@ import re  # noqa: F401
 import json
 
 from pydantic import BaseModel, ConfigDict, StrictStr
-from typing import Any, ClassVar, Dict, List
+from typing import Any, ClassVar, Dict, List, Optional
+from asteroid_odyssey.agents_v2_gen.models.common_os_error import CommonOSError
 from typing import Optional, Set
 from typing_extensions import Self
 
@@ -26,8 +27,9 @@ class AgentsExecutionFailedPayload(BaseModel):
     """
     AgentsExecutionFailedPayload
     """ # noqa: E501
+    os_error: Optional[CommonOSError] = None
     reason: StrictStr
-    __properties: ClassVar[List[str]] = ["reason"]
+    __properties: ClassVar[List[str]] = ["os_error", "reason"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -68,6 +70,9 @@ class AgentsExecutionFailedPayload(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # override the default output from pydantic by calling `to_dict()` of os_error
+        if self.os_error:
+            _dict['os_error'] = self.os_error.to_dict()
         return _dict
 
     @classmethod
@@ -80,6 +85,7 @@ class AgentsExecutionFailedPayload(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
+            "os_error": CommonOSError.from_dict(obj["os_error"]) if obj.get("os_error") is not None else None,
             "reason": obj.get("reason")
         })
         return _obj

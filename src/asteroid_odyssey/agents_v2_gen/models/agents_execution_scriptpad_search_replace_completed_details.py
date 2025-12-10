@@ -19,26 +19,27 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr, field_validator
 from typing import Any, ClassVar, Dict, List, Optional
-from asteroid_odyssey.agents_v2_gen.models.agents_execution_action_name import AgentsExecutionActionName
 from typing import Optional, Set
 from typing_extensions import Self
 
-class AgentsExecutionActivityActionFailedPayload(BaseModel):
+class AgentsExecutionScriptpadSearchReplaceCompletedDetails(BaseModel):
     """
-    AgentsExecutionActivityActionFailedPayload
+    AgentsExecutionScriptpadSearchReplaceCompletedDetails
     """ # noqa: E501
-    action_id: StrictStr = Field(alias="actionId")
-    action_name: AgentsExecutionActionName = Field(alias="actionName")
-    activity_type: StrictStr = Field(alias="activityType")
-    duration: Optional[StrictInt] = None
-    message: StrictStr
-    __properties: ClassVar[List[str]] = ["actionId", "actionName", "activityType", "duration", "message"]
+    action_name: StrictStr = Field(alias="actionName")
+    lines_replaced: StrictInt = Field(alias="linesReplaced")
+    lines_replaced_with: StrictInt = Field(alias="linesReplacedWith")
+    new_scriptpad: Optional[StrictStr] = Field(default=None, alias="newScriptpad")
+    new_total_lines: StrictInt = Field(alias="newTotalLines")
+    old_scriptpad: Optional[StrictStr] = Field(default=None, alias="oldScriptpad")
+    old_total_lines: StrictInt = Field(alias="oldTotalLines")
+    __properties: ClassVar[List[str]] = ["actionName", "linesReplaced", "linesReplacedWith", "newScriptpad", "newTotalLines", "oldScriptpad", "oldTotalLines"]
 
-    @field_validator('activity_type')
-    def activity_type_validate_enum(cls, value):
+    @field_validator('action_name')
+    def action_name_validate_enum(cls, value):
         """Validates the enum"""
-        if value not in set(['action_failed']):
-            raise ValueError("must be one of enum values ('action_failed')")
+        if value not in set(['scriptpad_search_replace']):
+            raise ValueError("must be one of enum values ('scriptpad_search_replace')")
         return value
 
     model_config = ConfigDict(
@@ -59,7 +60,7 @@ class AgentsExecutionActivityActionFailedPayload(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of AgentsExecutionActivityActionFailedPayload from a JSON string"""
+        """Create an instance of AgentsExecutionScriptpadSearchReplaceCompletedDetails from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -84,7 +85,7 @@ class AgentsExecutionActivityActionFailedPayload(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of AgentsExecutionActivityActionFailedPayload from a dict"""
+        """Create an instance of AgentsExecutionScriptpadSearchReplaceCompletedDetails from a dict"""
         if obj is None:
             return None
 
@@ -92,11 +93,13 @@ class AgentsExecutionActivityActionFailedPayload(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "actionId": obj.get("actionId"),
             "actionName": obj.get("actionName"),
-            "activityType": obj.get("activityType"),
-            "duration": obj.get("duration"),
-            "message": obj.get("message")
+            "linesReplaced": obj.get("linesReplaced"),
+            "linesReplacedWith": obj.get("linesReplacedWith"),
+            "newScriptpad": obj.get("newScriptpad"),
+            "newTotalLines": obj.get("newTotalLines"),
+            "oldScriptpad": obj.get("oldScriptpad"),
+            "oldTotalLines": obj.get("oldTotalLines")
         })
         return _obj
 

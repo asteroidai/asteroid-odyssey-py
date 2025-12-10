@@ -18,24 +18,29 @@ import re  # noqa: F401
 import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictStr, field_validator
-from typing import Any, ClassVar, Dict, List
-from asteroid_odyssey.agents_v2_gen.models.agents_execution_activity_status_changed_payload import AgentsExecutionActivityStatusChangedPayload
+from typing import Any, ClassVar, Dict, List, Optional
+from asteroid_odyssey.agents_v2_gen.models.agents_graph_models_nodes_properties_playwright_script_llm_var import AgentsGraphModelsNodesPropertiesPlaywrightScriptLLMVar
 from typing import Optional, Set
 from typing_extensions import Self
 
-class ActivityPayloadUnionStatusChanged(BaseModel):
+class AgentsExecutionActivityPlaywrightScriptGeneratedPayload(BaseModel):
     """
-    ActivityPayloadUnionStatusChanged
+    AgentsExecutionActivityPlaywrightScriptGeneratedPayload
     """ # noqa: E501
     activity_type: StrictStr = Field(alias="activityType")
-    data: AgentsExecutionActivityStatusChangedPayload
-    __properties: ClassVar[List[str]] = ["activityType", "data"]
+    context: StrictStr
+    llm_vars: Optional[List[AgentsGraphModelsNodesPropertiesPlaywrightScriptLLMVar]] = Field(default=None, alias="llmVars")
+    node_id: StrictStr = Field(alias="nodeId")
+    node_name: StrictStr = Field(alias="nodeName")
+    old_script: Optional[StrictStr] = Field(default=None, alias="oldScript")
+    script: StrictStr
+    __properties: ClassVar[List[str]] = ["activityType", "context", "llmVars", "nodeId", "nodeName", "oldScript", "script"]
 
     @field_validator('activity_type')
     def activity_type_validate_enum(cls, value):
         """Validates the enum"""
-        if value not in set(['status_changed']):
-            raise ValueError("must be one of enum values ('status_changed')")
+        if value not in set(['playwright_script_generated']):
+            raise ValueError("must be one of enum values ('playwright_script_generated')")
         return value
 
     model_config = ConfigDict(
@@ -56,7 +61,7 @@ class ActivityPayloadUnionStatusChanged(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of ActivityPayloadUnionStatusChanged from a JSON string"""
+        """Create an instance of AgentsExecutionActivityPlaywrightScriptGeneratedPayload from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -77,14 +82,18 @@ class ActivityPayloadUnionStatusChanged(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of data
-        if self.data:
-            _dict['data'] = self.data.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of each item in llm_vars (list)
+        _items = []
+        if self.llm_vars:
+            for _item_llm_vars in self.llm_vars:
+                if _item_llm_vars:
+                    _items.append(_item_llm_vars.to_dict())
+            _dict['llmVars'] = _items
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of ActivityPayloadUnionStatusChanged from a dict"""
+        """Create an instance of AgentsExecutionActivityPlaywrightScriptGeneratedPayload from a dict"""
         if obj is None:
             return None
 
@@ -93,7 +102,12 @@ class ActivityPayloadUnionStatusChanged(BaseModel):
 
         _obj = cls.model_validate({
             "activityType": obj.get("activityType"),
-            "data": AgentsExecutionActivityStatusChangedPayload.from_dict(obj["data"]) if obj.get("data") is not None else None
+            "context": obj.get("context"),
+            "llmVars": [AgentsGraphModelsNodesPropertiesPlaywrightScriptLLMVar.from_dict(_item) for _item in obj["llmVars"]] if obj.get("llmVars") is not None else None,
+            "nodeId": obj.get("nodeId"),
+            "nodeName": obj.get("nodeName"),
+            "oldScript": obj.get("oldScript"),
+            "script": obj.get("script")
         })
         return _obj
 

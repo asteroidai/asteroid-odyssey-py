@@ -39,10 +39,13 @@ from .agents_v2_gen import (
     AgentList200Response as AgentList200Response,
     Configuration as AgentsV2Configuration,
     ApiClient as AgentsV2ApiClient,
-    DefaultApi as AgentsV2ExecutionApi,
+    AgentsApi as AgentsV2AgentsApi,
+    ExecutionApi as AgentsV2ExecutionApi,
     AgentsExecutionActivity as ExecutionActivity,
     AgentsExecutionUserMessagesAddTextBody as ExecutionUserMessagesAddTextBody,
     AgentsFilesFile as File,
+    AgentsAgentExecuteAgentRequest as V2ExecuteAgentRequest,
+    AgentsFilesTempFile as TempFile,
 )
 
 
@@ -131,7 +134,7 @@ class AsteroidClient:
         if api_key is None:
             raise TypeError("API key cannot be None")
 
-        # Configure the API client
+        # Configure the V1 API client (used for status, results, profiles, etc.)
         config = AgentsV1Configuration(
             host=base_url or "https://odyssey.asteroid.ai/api/v1",
             api_key={'ApiKeyAuth': api_key}
@@ -142,23 +145,34 @@ class AsteroidClient:
         self.execution_api = AgentsV1ExecutionApi(self.api_client)
         self.agent_profile_api = AgentsV1AgentProfileApi(self.api_client)
 
+        # Configure the V2 API client
         self.agents_v2_config = AgentsV2Configuration(
             host=base_url or "https://odyssey.asteroid.ai/agents/v2",
             api_key={'ApiKeyAuth': api_key}
         )
         self.agents_v2_api_client = AgentsV2ApiClient(self.agents_v2_config)
+        self.agents_v2_agents_api = AgentsV2AgentsApi(self.agents_v2_api_client)
         self.agents_v2_execution_api = AgentsV2ExecutionApi(self.agents_v2_api_client)
 
-    # --- V1 ---
-
-    def execute_agent(self, agent_id: str, execution_data: Dict[str, Any], agent_profile_id: Optional[str] = None) -> str:
+    def execute_agent(
+        self,
+        agent_id: str,
+        execution_data: Optional[Dict[str, Any]] = None,
+        agent_profile_id: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+        temp_files: Optional[List[TempFile]] = None,
+        version: Optional[int] = None,
+    ) -> str:
         """
         Execute an agent with the provided parameters.
 
         Args:
             agent_id: The ID of the agent to execute
-            execution_data: The execution parameters
-            agent_profile_id: Optional ID of the agent profile
+            execution_data: Dynamic data to be merged into the placeholders defined in prompts
+            agent_profile_id: Optional ID of the agent profile to use
+            metadata: Optional metadata key-value pairs for organizing and filtering executions
+            temp_files: Optional list of temporary files to attach (must be pre-uploaded using stage file endpoint)
+            version: Optional version of the agent to execute. If not provided, the latest version will be used.
 
         Returns:
             The execution ID
@@ -167,14 +181,23 @@ class AsteroidClient:
             AsteroidAPIError: If the execution request fails
 
         Example:
-            execution_id = client.execute_agent('my-agent-id', {'input': 'some dynamic value'}, 'agent-profile-id')
+            execution_id = client.execute_agent('my-agent-id', {'input': 'some dynamic value'})
+            execution_id = client.execute_agent('my-agent-id', {'input': 'value'}, version=3)
         """
-        req = StructuredAgentExecutionRequest(dynamic_data=execution_data, agent_profile_id=agent_profile_id)
+        req = V2ExecuteAgentRequest(
+            dynamic_data=execution_data,
+            agent_profile_id=agent_profile_id,
+            metadata=metadata,
+            temp_files=temp_files,
+            version=version,
+        )
         try:
-            response = self.execution_api.execute_agent_structured(agent_id, req)
+            response = self.agents_v2_agents_api.agent_execute_post(agent_id, req)
             return response.execution_id
         except ApiException as e:
             raise AsteroidAPIError(f"Failed to execute agent: {e}") from e
+
+    # --- V1 ---
 
     def get_execution_status(self, execution_id: str) -> ExecutionStatusResponse:
         """
@@ -953,25 +976,44 @@ def create_client(api_key: str, base_url: Optional[str] = None) -> AsteroidClien
     """
     return AsteroidClient(api_key, base_url)
 
-# --- V1 ---
-
-def execute_agent(client: AsteroidClient, agent_id: str, execution_data: Dict[str, Any], agent_profile_id: Optional[str] = None) -> str:
+def execute_agent(
+    client: AsteroidClient,
+    agent_id: str,
+    execution_data: Optional[Dict[str, Any]] = None,
+    agent_profile_id: Optional[str] = None,
+    metadata: Optional[Dict[str, Any]] = None,
+    temp_files: Optional[List[TempFile]] = None,
+    version: Optional[int] = None,
+) -> str:
     """
     Execute an agent with the provided parameters.
 
     Args:
         client: The AsteroidClient instance
         agent_id: The ID of the agent to execute
-        execution_data: The execution parameters
-        agent_profile_id: Optional ID of the agent profile
+        execution_data: Dynamic data to be merged into the placeholders defined in prompts
+        agent_profile_id: Optional ID of the agent profile to use
+        metadata: Optional metadata key-value pairs for organizing and filtering executions
+        temp_files: Optional list of temporary files to attach (must be pre-uploaded using stage file endpoint)
+        version: Optional version of the agent to execute. If not provided, the latest version will be used.
 
     Returns:
         The execution ID
 
     Example:
-        execution_id = execute_agent(client, 'my-agent-id', {'input': 'some dynamic value'}, 'agent-profile-id')
+        execution_id = execute_agent(client, 'my-agent-id', {'input': 'some dynamic value'})
+        execution_id = execute_agent(client, 'my-agent-id', {'input': 'value'}, version=3)
     """
-    return client.execute_agent(agent_id, execution_data, agent_profile_id)
+    return client.execute_agent(
+        agent_id,
+        execution_data,
+        agent_profile_id,
+        metadata,
+        temp_files,
+        version,
+    )
+
+# --- V1 ---
 
 
 
@@ -1375,5 +1417,6 @@ __all__ = [
     'AsteroidAPIError',
     'ExecutionError',
     'TimeoutError',
-    'AgentInteractionResult'
+    'AgentInteractionResult',
+    'TempFile',
 ]

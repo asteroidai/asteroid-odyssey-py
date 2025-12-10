@@ -17,7 +17,7 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictStr, field_validator
 from typing import Any, ClassVar, Dict, List
 from typing import Optional, Set
 from typing_extensions import Self
@@ -26,8 +26,16 @@ class AgentsExecutionActivityGenericPayload(BaseModel):
     """
     AgentsExecutionActivityGenericPayload
     """ # noqa: E501
+    activity_type: StrictStr = Field(alias="activityType")
     message: StrictStr
-    __properties: ClassVar[List[str]] = ["message"]
+    __properties: ClassVar[List[str]] = ["activityType", "message"]
+
+    @field_validator('activity_type')
+    def activity_type_validate_enum(cls, value):
+        """Validates the enum"""
+        if value not in set(['generic']):
+            raise ValueError("must be one of enum values ('generic')")
+        return value
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -80,6 +88,7 @@ class AgentsExecutionActivityGenericPayload(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
+            "activityType": obj.get("activityType"),
             "message": obj.get("message")
         })
         return _obj

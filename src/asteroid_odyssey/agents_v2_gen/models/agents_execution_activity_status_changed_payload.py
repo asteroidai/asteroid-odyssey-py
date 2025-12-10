@@ -17,7 +17,7 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StrictStr, field_validator
 from typing import Any, ClassVar, Dict, List, Optional
 from asteroid_odyssey.agents_v2_gen.models.agents_execution_awaiting_confirmation_payload import AgentsExecutionAwaitingConfirmationPayload
 from asteroid_odyssey.agents_v2_gen.models.agents_execution_cancelled_payload import AgentsExecutionCancelledPayload
@@ -32,13 +32,21 @@ class AgentsExecutionActivityStatusChangedPayload(BaseModel):
     """
     AgentsExecutionActivityStatusChangedPayload
     """ # noqa: E501
+    activity_type: StrictStr = Field(alias="activityType")
     awaiting_confirmation_payload: Optional[AgentsExecutionAwaitingConfirmationPayload] = Field(default=None, alias="awaitingConfirmationPayload")
     cancelled_payload: Optional[AgentsExecutionCancelledPayload] = Field(default=None, alias="cancelledPayload")
     completed_payload: Optional[AgentsExecutionCompletedPayload] = Field(default=None, alias="completedPayload")
     failed_payload: Optional[AgentsExecutionFailedPayload] = Field(default=None, alias="failedPayload")
     paused_payload: Optional[AgentsExecutionPausedPayload] = Field(default=None, alias="pausedPayload")
     status: AgentsExecutionStatus
-    __properties: ClassVar[List[str]] = ["awaitingConfirmationPayload", "cancelledPayload", "completedPayload", "failedPayload", "pausedPayload", "status"]
+    __properties: ClassVar[List[str]] = ["activityType", "awaitingConfirmationPayload", "cancelledPayload", "completedPayload", "failedPayload", "pausedPayload", "status"]
+
+    @field_validator('activity_type')
+    def activity_type_validate_enum(cls, value):
+        """Validates the enum"""
+        if value not in set(['status_changed']):
+            raise ValueError("must be one of enum values ('status_changed')")
+        return value
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -106,6 +114,7 @@ class AgentsExecutionActivityStatusChangedPayload(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
+            "activityType": obj.get("activityType"),
             "awaitingConfirmationPayload": AgentsExecutionAwaitingConfirmationPayload.from_dict(obj["awaitingConfirmationPayload"]) if obj.get("awaitingConfirmationPayload") is not None else None,
             "cancelledPayload": AgentsExecutionCancelledPayload.from_dict(obj["cancelledPayload"]) if obj.get("cancelledPayload") is not None else None,
             "completedPayload": AgentsExecutionCompletedPayload.from_dict(obj["completedPayload"]) if obj.get("completedPayload") is not None else None,

@@ -17,26 +17,18 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, Field, StrictStr, field_validator
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Any, ClassVar, Dict, List
-from asteroid_odyssey.agents_v2_gen.models.agents_execution_activity_step_started_payload import AgentsExecutionActivityStepStartedPayload
+from asteroid_odyssey.agents_v2_gen.models.agents_files_temp_file import AgentsFilesTempFile
 from typing import Optional, Set
 from typing_extensions import Self
 
-class ActivityPayloadUnionStepStarted(BaseModel):
+class AgentsFilesTempFilesResponse(BaseModel):
     """
-    ActivityPayloadUnionStepStarted
+    AgentsFilesTempFilesResponse
     """ # noqa: E501
-    activity_type: StrictStr = Field(alias="activityType")
-    data: AgentsExecutionActivityStepStartedPayload
-    __properties: ClassVar[List[str]] = ["activityType", "data"]
-
-    @field_validator('activity_type')
-    def activity_type_validate_enum(cls, value):
-        """Validates the enum"""
-        if value not in set(['step_started']):
-            raise ValueError("must be one of enum values ('step_started')")
-        return value
+    temp_files: List[AgentsFilesTempFile] = Field(alias="tempFiles")
+    __properties: ClassVar[List[str]] = ["tempFiles"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -56,7 +48,7 @@ class ActivityPayloadUnionStepStarted(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of ActivityPayloadUnionStepStarted from a JSON string"""
+        """Create an instance of AgentsFilesTempFilesResponse from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -77,14 +69,18 @@ class ActivityPayloadUnionStepStarted(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of data
-        if self.data:
-            _dict['data'] = self.data.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of each item in temp_files (list)
+        _items = []
+        if self.temp_files:
+            for _item_temp_files in self.temp_files:
+                if _item_temp_files:
+                    _items.append(_item_temp_files.to_dict())
+            _dict['tempFiles'] = _items
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of ActivityPayloadUnionStepStarted from a dict"""
+        """Create an instance of AgentsFilesTempFilesResponse from a dict"""
         if obj is None:
             return None
 
@@ -92,8 +88,7 @@ class ActivityPayloadUnionStepStarted(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "activityType": obj.get("activityType"),
-            "data": AgentsExecutionActivityStepStartedPayload.from_dict(obj["data"]) if obj.get("data") is not None else None
+            "tempFiles": [AgentsFilesTempFile.from_dict(_item) for _item in obj["tempFiles"]] if obj.get("tempFiles") is not None else None
         })
         return _obj
 

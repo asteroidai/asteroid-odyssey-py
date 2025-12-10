@@ -19,23 +19,29 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictStr, field_validator
 from typing import Any, ClassVar, Dict, List
-from asteroid_odyssey.agents_v2_gen.models.agents_execution_activity_user_message_received_payload import AgentsExecutionActivityUserMessageReceivedPayload
 from typing import Optional, Set
 from typing_extensions import Self
 
-class ActivityPayloadUnionUserMessageReceived(BaseModel):
+class AgentsExecutionScratchpadReadStartedDetails(BaseModel):
     """
-    ActivityPayloadUnionUserMessageReceived
+    AgentsExecutionScratchpadReadStartedDetails
     """ # noqa: E501
-    activity_type: StrictStr = Field(alias="activityType")
-    data: AgentsExecutionActivityUserMessageReceivedPayload
-    __properties: ClassVar[List[str]] = ["activityType", "data"]
+    action_name: StrictStr = Field(alias="actionName")
+    operation: StrictStr
+    __properties: ClassVar[List[str]] = ["actionName", "operation"]
 
-    @field_validator('activity_type')
-    def activity_type_validate_enum(cls, value):
+    @field_validator('action_name')
+    def action_name_validate_enum(cls, value):
         """Validates the enum"""
-        if value not in set(['user_message_received']):
-            raise ValueError("must be one of enum values ('user_message_received')")
+        if value not in set(['scratchpad_read']):
+            raise ValueError("must be one of enum values ('scratchpad_read')")
+        return value
+
+    @field_validator('operation')
+    def operation_validate_enum(cls, value):
+        """Validates the enum"""
+        if value not in set(['read']):
+            raise ValueError("must be one of enum values ('read')")
         return value
 
     model_config = ConfigDict(
@@ -56,7 +62,7 @@ class ActivityPayloadUnionUserMessageReceived(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of ActivityPayloadUnionUserMessageReceived from a JSON string"""
+        """Create an instance of AgentsExecutionScratchpadReadStartedDetails from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -77,14 +83,11 @@ class ActivityPayloadUnionUserMessageReceived(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of data
-        if self.data:
-            _dict['data'] = self.data.to_dict()
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of ActivityPayloadUnionUserMessageReceived from a dict"""
+        """Create an instance of AgentsExecutionScratchpadReadStartedDetails from a dict"""
         if obj is None:
             return None
 
@@ -92,8 +95,8 @@ class ActivityPayloadUnionUserMessageReceived(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "activityType": obj.get("activityType"),
-            "data": AgentsExecutionActivityUserMessageReceivedPayload.from_dict(obj["data"]) if obj.get("data") is not None else None
+            "actionName": obj.get("actionName"),
+            "operation": obj.get("operation")
         })
         return _obj
 

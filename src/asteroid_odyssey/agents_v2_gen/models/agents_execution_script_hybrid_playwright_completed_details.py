@@ -17,25 +17,27 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, Field, StrictStr, field_validator
-from typing import Any, ClassVar, Dict, List
-from asteroid_odyssey.agents_v2_gen.models.agents_execution_activity_action_started_payload import AgentsExecutionActivityActionStartedPayload
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, StrictStr, field_validator
+from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
 
-class ActivityPayloadUnionActionStarted(BaseModel):
+class AgentsExecutionScriptHybridPlaywrightCompletedDetails(BaseModel):
     """
-    ActivityPayloadUnionActionStarted
+    AgentsExecutionScriptHybridPlaywrightCompletedDetails
     """ # noqa: E501
-    activity_type: StrictStr = Field(alias="activityType")
-    data: AgentsExecutionActivityActionStartedPayload
-    __properties: ClassVar[List[str]] = ["activityType", "data"]
+    action_name: StrictStr = Field(alias="actionName")
+    console_logs: List[StrictStr] = Field(alias="consoleLogs")
+    failed_line: Optional[StrictInt] = Field(default=None, alias="failedLine")
+    result: StrictStr
+    success: StrictBool
+    __properties: ClassVar[List[str]] = ["actionName", "consoleLogs", "failedLine", "result", "success"]
 
-    @field_validator('activity_type')
-    def activity_type_validate_enum(cls, value):
+    @field_validator('action_name')
+    def action_name_validate_enum(cls, value):
         """Validates the enum"""
-        if value not in set(['action_started']):
-            raise ValueError("must be one of enum values ('action_started')")
+        if value not in set(['script_hybrid_playwright']):
+            raise ValueError("must be one of enum values ('script_hybrid_playwright')")
         return value
 
     model_config = ConfigDict(
@@ -56,7 +58,7 @@ class ActivityPayloadUnionActionStarted(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of ActivityPayloadUnionActionStarted from a JSON string"""
+        """Create an instance of AgentsExecutionScriptHybridPlaywrightCompletedDetails from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -77,14 +79,11 @@ class ActivityPayloadUnionActionStarted(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of data
-        if self.data:
-            _dict['data'] = self.data.to_dict()
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of ActivityPayloadUnionActionStarted from a dict"""
+        """Create an instance of AgentsExecutionScriptHybridPlaywrightCompletedDetails from a dict"""
         if obj is None:
             return None
 
@@ -92,8 +91,11 @@ class ActivityPayloadUnionActionStarted(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "activityType": obj.get("activityType"),
-            "data": AgentsExecutionActivityActionStartedPayload.from_dict(obj["data"]) if obj.get("data") is not None else None
+            "actionName": obj.get("actionName"),
+            "consoleLogs": obj.get("consoleLogs"),
+            "failedLine": obj.get("failedLine"),
+            "result": obj.get("result"),
+            "success": obj.get("success")
         })
         return _obj
 
