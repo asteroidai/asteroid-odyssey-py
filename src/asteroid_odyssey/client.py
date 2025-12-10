@@ -24,7 +24,6 @@ from .agents_v1_gen import (
     AgentProfileApi as AgentsV1AgentProfileApi,
     ExecutionStatusResponse,
     ExecutionResult,
-    UploadExecutionFiles200Response,
     Status,
     StructuredAgentExecutionRequest,
     CreateAgentProfileRequest,
@@ -41,11 +40,13 @@ from .agents_v2_gen import (
     ApiClient as AgentsV2ApiClient,
     AgentsApi as AgentsV2AgentsApi,
     ExecutionApi as AgentsV2ExecutionApi,
+    FilesApi as AgentsV2FilesApi,
     AgentsExecutionActivity as ExecutionActivity,
     AgentsExecutionUserMessagesAddTextBody as ExecutionUserMessagesAddTextBody,
     AgentsFilesFile as File,
     AgentsAgentExecuteAgentRequest as V2ExecuteAgentRequest,
     AgentsFilesTempFile as TempFile,
+    AgentsFilesTempFilesResponse as TempFilesResponse,
 )
 
 
@@ -153,6 +154,7 @@ class AsteroidClient:
         self.agents_v2_api_client = AgentsV2ApiClient(self.agents_v2_config)
         self.agents_v2_agents_api = AgentsV2AgentsApi(self.agents_v2_api_client)
         self.agents_v2_execution_api = AgentsV2ExecutionApi(self.agents_v2_api_client)
+        self.agents_v2_files_api = AgentsV2FilesApi(self.agents_v2_api_client)
 
     def execute_agent(
         self,
@@ -332,9 +334,12 @@ class AsteroidClient:
         execution_id: str,
         files: List[Union[bytes, str, Tuple[str, bytes]]],
         default_filename: str = "file.txt"
-    ) -> UploadExecutionFiles200Response:
+    ) -> str:
         """
-        Upload files to an execution.
+        Upload files to a running execution.
+
+        Use this method to upload files to an execution that is already in progress.
+        If you want to attach files to an execution before it starts, use stage_temp_files instead.
 
         Args:
             execution_id: The execution identifier
@@ -345,18 +350,17 @@ class AsteroidClient:
             default_filename: Default filename to use when file is provided as bytes
 
         Returns:
-            The upload response containing message and file IDs
+            Success message from the API
 
         Raises:
-            Exception: If the upload request fails
+            AsteroidAPIError: If the upload request fails
 
         Example:
-            # Upload with file content (file should be in your current working directory)
+            # Upload with file content
             with open('hello.txt', 'r') as f:
                 file_content = f.read()
 
             response = client.upload_execution_files(execution_id, [file_content.encode()])
-            print(f"Uploaded files: {response.file_ids}")
 
             # Upload with filename and content
             files = [('hello.txt', file_content.encode())]
@@ -367,7 +371,7 @@ class AsteroidClient:
             response = client.upload_execution_files(execution_id, [hello_content])
         """
         try:
-            # Process files to ensure proper format
+            # Process files to ensure proper format for the V2 API
             processed_files = []
             for file_item in files:
                 if isinstance(file_item, tuple):
@@ -396,7 +400,7 @@ class AsteroidClient:
                     content = str(file_item).encode()
                     processed_files.append((default_filename, content))
 
-            response = self.execution_api.upload_execution_files(execution_id, files=processed_files)
+            response = self.agents_v2_files_api.execution_context_files_upload(execution_id, files=processed_files)
             return response
         except ApiException as e:
             raise AsteroidAPIError(f"Failed to upload execution files: {e}") from e
@@ -847,16 +851,91 @@ class AsteroidClient:
         Returns:
             A list of files associated with the execution
         Raises:
-            Exception: If the files request fails
+            AsteroidAPIError: If the files request fails
         Example:
             files = client.get_execution_files("execution_id")
             for file in files:
                 print(f"File: {file.file_name}, Size: {file.file_size}")
         """
         try:
-            return self.agents_v2_execution_api.execution_context_files_get(execution_id)
+            return self.agents_v2_files_api.execution_context_files_get(execution_id)
         except ApiException as e:
             raise AsteroidAPIError(f"Failed to get execution files: {e}") from e
+
+    def stage_temp_files(
+        self,
+        organization_id: str,
+        files: List[Union[bytes, str, Tuple[str, bytes]]],
+        default_filename: str = "file.txt"
+    ) -> List[TempFile]:
+        """
+        Stage files before starting an execution.
+
+        Use this method to pre-upload files that will be attached to an execution when it starts.
+        The returned TempFile objects can be passed to execute_agent's temp_files parameter.
+
+        Args:
+            organization_id: The organization identifier
+            files: List of files to stage. Each file can be:
+                   - bytes: Raw file content (will use default_filename)
+                   - str: File path as string (will read file and use filename)
+                   - Tuple[str, bytes]: (filename, file_content) tuple
+            default_filename: Default filename to use when file is provided as bytes
+
+        Returns:
+            List of TempFile objects that can be passed to execute_agent
+
+        Raises:
+            AsteroidAPIError: If the staging request fails
+
+        Example:
+            # Stage files before execution
+            temp_files = client.stage_temp_files("org-123", [
+                ("data.csv", csv_content.encode()),
+                "/path/to/document.pdf"
+            ])
+
+            # Use staged files when executing agent
+            execution_id = client.execute_agent(
+                agent_id="my-agent",
+                execution_data={"input": "Process these files"},
+                temp_files=temp_files
+            )
+        """
+        try:
+            # Process files to ensure proper format for the V2 API
+            processed_files = []
+            for file_item in files:
+                if isinstance(file_item, tuple):
+                    # Already in (filename, content) format
+                    filename, content = file_item
+                    if isinstance(content, str):
+                        content = content.encode()
+                    processed_files.append((filename, content))
+                elif isinstance(file_item, str):
+                    # Check if string is a file path that exists, otherwise treat as content
+                    if os.path.isfile(file_item):
+                        # File path - read the file
+                        filename = os.path.basename(file_item)
+                        with open(file_item, 'rb') as f:
+                            content = f.read()
+                        processed_files.append((filename, content))
+                    else:
+                        # String content - encode and use default filename
+                        content = file_item.encode()
+                        processed_files.append((default_filename, content))
+                elif isinstance(file_item, bytes):
+                    # Raw bytes - use default filename
+                    processed_files.append((default_filename, file_item))
+                else:
+                    # Other types - convert to string content and encode
+                    content = str(file_item).encode()
+                    processed_files.append((default_filename, content))
+
+            response = self.agents_v2_files_api.temp_files_stage(organization_id, files=processed_files)
+            return response.temp_files
+        except ApiException as e:
+            raise AsteroidAPIError(f"Failed to stage temp files: {e}") from e
 
     def download_execution_file(self, file: File, download_path: Union[str, Path],
                               create_dirs: bool = True, timeout: int = 30) -> str:
@@ -1090,9 +1169,12 @@ def upload_execution_files(
     execution_id: str,
     files: List[Union[bytes, str, Tuple[str, bytes]]],
     default_filename: str = "file.txt"
-) -> UploadExecutionFiles200Response:
+) -> str:
     """
-    Upload files to an execution.
+    Upload files to a running execution.
+
+    Use this function to upload files to an execution that is already in progress.
+    If you want to attach files to an execution before it starts, use stage_temp_files instead.
 
     Args:
         client: The AsteroidClient instance
@@ -1101,19 +1183,63 @@ def upload_execution_files(
         default_filename: Default filename to use when file is provided as bytes
 
     Returns:
-        The upload response containing message and file IDs
+        Success message from the API
 
     Example:
         # Create a simple text file with "Hello World!" content
         hello_content = "Hello World!".encode()
         response = upload_execution_files(client, execution_id, [hello_content])
-        print(f"Uploaded files: {response.file_ids}")
 
         # Or specify filename with content
         files = [('hello.txt', "Hello World!".encode())]
         response = upload_execution_files(client, execution_id, files)
     """
     return client.upload_execution_files(execution_id, files, default_filename)
+
+
+def stage_temp_files(
+    client: AsteroidClient,
+    organization_id: str,
+    files: List[Union[bytes, str, Tuple[str, bytes]]],
+    default_filename: str = "file.txt"
+) -> List[TempFile]:
+    """
+    Stage files before starting an execution.
+
+    Use this function to pre-upload files that will be attached to an execution when it starts.
+    The returned TempFile objects can be passed to execute_agent's temp_files parameter.
+
+    Args:
+        client: The AsteroidClient instance
+        organization_id: The organization identifier
+        files: List of files to stage. Each file can be:
+               - bytes: Raw file content (will use default_filename)
+               - str: File path as string (will read file and use filename)
+               - Tuple[str, bytes]: (filename, file_content) tuple
+        default_filename: Default filename to use when file is provided as bytes
+
+    Returns:
+        List of TempFile objects that can be passed to execute_agent
+
+    Raises:
+        AsteroidAPIError: If the staging request fails
+
+    Example:
+        # Stage files before execution
+        temp_files = stage_temp_files(client, "org-123", [
+            ("data.csv", csv_content.encode()),
+            "/path/to/document.pdf"
+        ])
+
+        # Use staged files when executing agent
+        execution_id = execute_agent(
+            client,
+            agent_id="my-agent",
+            execution_data={"input": "Process these files"},
+            temp_files=temp_files
+        )
+    """
+    return client.stage_temp_files(organization_id, files, default_filename)
 
 
 def get_browser_session_recording(client: AsteroidClient, execution_id: str) -> str:
@@ -1401,6 +1527,7 @@ __all__ = [
     'get_execution_result',
     'wait_for_execution_result',
     'upload_execution_files',
+    'stage_temp_files',
     'get_browser_session_recording',
     'get_agent_profiles',
     'get_agent_profile',
@@ -1419,4 +1546,5 @@ __all__ = [
     'TimeoutError',
     'AgentInteractionResult',
     'TempFile',
+    'TempFilesResponse',
 ]
