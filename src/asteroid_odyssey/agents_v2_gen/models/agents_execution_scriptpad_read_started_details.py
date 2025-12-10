@@ -17,18 +17,26 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr, field_validator
 from typing import Any, ClassVar, Dict, List
-from asteroid_odyssey.agents_v2_gen.models.agents_execution_graph_update import AgentsExecutionGraphUpdate
 from typing import Optional, Set
 from typing_extensions import Self
 
-class AgentsExecutionActivityGraphUpdatedPayload(BaseModel):
+class AgentsExecutionScriptpadReadStartedDetails(BaseModel):
     """
-    AgentsExecutionActivityGraphUpdatedPayload
+    AgentsExecutionScriptpadReadStartedDetails
     """ # noqa: E501
-    graph_update: List[AgentsExecutionGraphUpdate] = Field(alias="graphUpdate")
-    __properties: ClassVar[List[str]] = ["graphUpdate"]
+    action_name: StrictStr = Field(alias="actionName")
+    limit: StrictInt
+    offset: StrictInt
+    __properties: ClassVar[List[str]] = ["actionName", "limit", "offset"]
+
+    @field_validator('action_name')
+    def action_name_validate_enum(cls, value):
+        """Validates the enum"""
+        if value not in set(['scriptpad_read']):
+            raise ValueError("must be one of enum values ('scriptpad_read')")
+        return value
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -48,7 +56,7 @@ class AgentsExecutionActivityGraphUpdatedPayload(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of AgentsExecutionActivityGraphUpdatedPayload from a JSON string"""
+        """Create an instance of AgentsExecutionScriptpadReadStartedDetails from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -69,18 +77,11 @@ class AgentsExecutionActivityGraphUpdatedPayload(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of each item in graph_update (list)
-        _items = []
-        if self.graph_update:
-            for _item_graph_update in self.graph_update:
-                if _item_graph_update:
-                    _items.append(_item_graph_update.to_dict())
-            _dict['graphUpdate'] = _items
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of AgentsExecutionActivityGraphUpdatedPayload from a dict"""
+        """Create an instance of AgentsExecutionScriptpadReadStartedDetails from a dict"""
         if obj is None:
             return None
 
@@ -88,7 +89,9 @@ class AgentsExecutionActivityGraphUpdatedPayload(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "graphUpdate": [AgentsExecutionGraphUpdate.from_dict(_item) for _item in obj["graphUpdate"]] if obj.get("graphUpdate") is not None else None
+            "actionName": obj.get("actionName"),
+            "limit": obj.get("limit"),
+            "offset": obj.get("offset")
         })
         return _obj
 

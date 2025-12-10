@@ -17,7 +17,7 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, StrictStr, field_validator
+from pydantic import BaseModel, ConfigDict, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
@@ -26,18 +26,11 @@ class AgentsExecutionCompletedPayload(BaseModel):
     """
     AgentsExecutionCompletedPayload
     """ # noqa: E501
-    final_answer: Optional[StrictStr] = None
+    lessons_learned: Optional[StrictStr] = None
     outcome: StrictStr
     reasoning: StrictStr
     result: Optional[Any]
-    __properties: ClassVar[List[str]] = ["final_answer", "outcome", "reasoning", "result"]
-
-    @field_validator('outcome')
-    def outcome_validate_enum(cls, value):
-        """Validates the enum"""
-        if value not in set(['success', 'failure']):
-            raise ValueError("must be one of enum values ('success', 'failure')")
-        return value
+    __properties: ClassVar[List[str]] = ["lessons_learned", "outcome", "reasoning", "result"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -95,7 +88,7 @@ class AgentsExecutionCompletedPayload(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "final_answer": obj.get("final_answer"),
+            "lessons_learned": obj.get("lessons_learned"),
             "outcome": obj.get("outcome"),
             "reasoning": obj.get("reasoning"),
             "result": obj.get("result")

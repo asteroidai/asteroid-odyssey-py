@@ -17,54 +17,60 @@ import json
 import pprint
 from pydantic import BaseModel, ConfigDict, Field, StrictStr, ValidationError, field_validator
 from typing import Any, List, Optional
-from asteroid_odyssey.agents_v2_gen.models.activity_payload_union_action_completed import ActivityPayloadUnionActionCompleted
-from asteroid_odyssey.agents_v2_gen.models.activity_payload_union_action_failed import ActivityPayloadUnionActionFailed
-from asteroid_odyssey.agents_v2_gen.models.activity_payload_union_action_started import ActivityPayloadUnionActionStarted
-from asteroid_odyssey.agents_v2_gen.models.activity_payload_union_file_added import ActivityPayloadUnionFileAdded
-from asteroid_odyssey.agents_v2_gen.models.activity_payload_union_generic import ActivityPayloadUnionGeneric
-from asteroid_odyssey.agents_v2_gen.models.activity_payload_union_graph_updated import ActivityPayloadUnionGraphUpdated
-from asteroid_odyssey.agents_v2_gen.models.activity_payload_union_status_changed import ActivityPayloadUnionStatusChanged
-from asteroid_odyssey.agents_v2_gen.models.activity_payload_union_step_completed import ActivityPayloadUnionStepCompleted
-from asteroid_odyssey.agents_v2_gen.models.activity_payload_union_step_started import ActivityPayloadUnionStepStarted
-from asteroid_odyssey.agents_v2_gen.models.activity_payload_union_terminal import ActivityPayloadUnionTerminal
-from asteroid_odyssey.agents_v2_gen.models.activity_payload_union_transitioned_node import ActivityPayloadUnionTransitionedNode
-from asteroid_odyssey.agents_v2_gen.models.activity_payload_union_user_message_received import ActivityPayloadUnionUserMessageReceived
+from asteroid_odyssey.agents_v2_gen.models.agents_execution_activity_action_completed_payload import AgentsExecutionActivityActionCompletedPayload
+from asteroid_odyssey.agents_v2_gen.models.agents_execution_activity_action_failed_payload import AgentsExecutionActivityActionFailedPayload
+from asteroid_odyssey.agents_v2_gen.models.agents_execution_activity_action_started_payload import AgentsExecutionActivityActionStartedPayload
+from asteroid_odyssey.agents_v2_gen.models.agents_execution_activity_file_added_payload import AgentsExecutionActivityFileAddedPayload
+from asteroid_odyssey.agents_v2_gen.models.agents_execution_activity_generic_payload import AgentsExecutionActivityGenericPayload
+from asteroid_odyssey.agents_v2_gen.models.agents_execution_activity_playwright_script_generated_payload import AgentsExecutionActivityPlaywrightScriptGeneratedPayload
+from asteroid_odyssey.agents_v2_gen.models.agents_execution_activity_reasoning_payload import AgentsExecutionActivityReasoningPayload
+from asteroid_odyssey.agents_v2_gen.models.agents_execution_activity_status_changed_payload import AgentsExecutionActivityStatusChangedPayload
+from asteroid_odyssey.agents_v2_gen.models.agents_execution_activity_step_completed_payload import AgentsExecutionActivityStepCompletedPayload
+from asteroid_odyssey.agents_v2_gen.models.agents_execution_activity_step_started_payload import AgentsExecutionActivityStepStartedPayload
+from asteroid_odyssey.agents_v2_gen.models.agents_execution_activity_transitioned_node_payload import AgentsExecutionActivityTransitionedNodePayload
+from asteroid_odyssey.agents_v2_gen.models.agents_execution_activity_user_message_received_payload import AgentsExecutionActivityUserMessageReceivedPayload
+from asteroid_odyssey.agents_v2_gen.models.agents_execution_activity_workflow_updated_payload import AgentsExecutionActivityWorkflowUpdatedPayload
+from asteroid_odyssey.agents_v2_gen.models.agents_execution_terminal_payload import AgentsExecutionTerminalPayload
 from pydantic import StrictStr, Field
 from typing import Union, List, Set, Optional, Dict
 from typing_extensions import Literal, Self
 
-AGENTSEXECUTIONACTIVITYPAYLOADUNION_ONE_OF_SCHEMAS = ["ActivityPayloadUnionActionCompleted", "ActivityPayloadUnionActionFailed", "ActivityPayloadUnionActionStarted", "ActivityPayloadUnionFileAdded", "ActivityPayloadUnionGeneric", "ActivityPayloadUnionGraphUpdated", "ActivityPayloadUnionStatusChanged", "ActivityPayloadUnionStepCompleted", "ActivityPayloadUnionStepStarted", "ActivityPayloadUnionTerminal", "ActivityPayloadUnionTransitionedNode", "ActivityPayloadUnionUserMessageReceived"]
+AGENTSEXECUTIONACTIVITYPAYLOADUNION_ONE_OF_SCHEMAS = ["AgentsExecutionActivityActionCompletedPayload", "AgentsExecutionActivityActionFailedPayload", "AgentsExecutionActivityActionStartedPayload", "AgentsExecutionActivityFileAddedPayload", "AgentsExecutionActivityGenericPayload", "AgentsExecutionActivityPlaywrightScriptGeneratedPayload", "AgentsExecutionActivityReasoningPayload", "AgentsExecutionActivityStatusChangedPayload", "AgentsExecutionActivityStepCompletedPayload", "AgentsExecutionActivityStepStartedPayload", "AgentsExecutionActivityTransitionedNodePayload", "AgentsExecutionActivityUserMessageReceivedPayload", "AgentsExecutionActivityWorkflowUpdatedPayload", "AgentsExecutionTerminalPayload"]
 
 class AgentsExecutionActivityPayloadUnion(BaseModel):
     """
     AgentsExecutionActivityPayloadUnion
     """
-    # data type: ActivityPayloadUnionTerminal
-    oneof_schema_1_validator: Optional[ActivityPayloadUnionTerminal] = None
-    # data type: ActivityPayloadUnionGeneric
-    oneof_schema_2_validator: Optional[ActivityPayloadUnionGeneric] = None
-    # data type: ActivityPayloadUnionStepStarted
-    oneof_schema_3_validator: Optional[ActivityPayloadUnionStepStarted] = None
-    # data type: ActivityPayloadUnionStepCompleted
-    oneof_schema_4_validator: Optional[ActivityPayloadUnionStepCompleted] = None
-    # data type: ActivityPayloadUnionTransitionedNode
-    oneof_schema_5_validator: Optional[ActivityPayloadUnionTransitionedNode] = None
-    # data type: ActivityPayloadUnionStatusChanged
-    oneof_schema_6_validator: Optional[ActivityPayloadUnionStatusChanged] = None
-    # data type: ActivityPayloadUnionActionStarted
-    oneof_schema_7_validator: Optional[ActivityPayloadUnionActionStarted] = None
-    # data type: ActivityPayloadUnionActionCompleted
-    oneof_schema_8_validator: Optional[ActivityPayloadUnionActionCompleted] = None
-    # data type: ActivityPayloadUnionActionFailed
-    oneof_schema_9_validator: Optional[ActivityPayloadUnionActionFailed] = None
-    # data type: ActivityPayloadUnionUserMessageReceived
-    oneof_schema_10_validator: Optional[ActivityPayloadUnionUserMessageReceived] = None
-    # data type: ActivityPayloadUnionFileAdded
-    oneof_schema_11_validator: Optional[ActivityPayloadUnionFileAdded] = None
-    # data type: ActivityPayloadUnionGraphUpdated
-    oneof_schema_12_validator: Optional[ActivityPayloadUnionGraphUpdated] = None
-    actual_instance: Optional[Union[ActivityPayloadUnionActionCompleted, ActivityPayloadUnionActionFailed, ActivityPayloadUnionActionStarted, ActivityPayloadUnionFileAdded, ActivityPayloadUnionGeneric, ActivityPayloadUnionGraphUpdated, ActivityPayloadUnionStatusChanged, ActivityPayloadUnionStepCompleted, ActivityPayloadUnionStepStarted, ActivityPayloadUnionTerminal, ActivityPayloadUnionTransitionedNode, ActivityPayloadUnionUserMessageReceived]] = None
-    one_of_schemas: Set[str] = { "ActivityPayloadUnionActionCompleted", "ActivityPayloadUnionActionFailed", "ActivityPayloadUnionActionStarted", "ActivityPayloadUnionFileAdded", "ActivityPayloadUnionGeneric", "ActivityPayloadUnionGraphUpdated", "ActivityPayloadUnionStatusChanged", "ActivityPayloadUnionStepCompleted", "ActivityPayloadUnionStepStarted", "ActivityPayloadUnionTerminal", "ActivityPayloadUnionTransitionedNode", "ActivityPayloadUnionUserMessageReceived" }
+    # data type: AgentsExecutionTerminalPayload
+    oneof_schema_1_validator: Optional[AgentsExecutionTerminalPayload] = None
+    # data type: AgentsExecutionActivityGenericPayload
+    oneof_schema_2_validator: Optional[AgentsExecutionActivityGenericPayload] = None
+    # data type: AgentsExecutionActivityReasoningPayload
+    oneof_schema_3_validator: Optional[AgentsExecutionActivityReasoningPayload] = None
+    # data type: AgentsExecutionActivityStepStartedPayload
+    oneof_schema_4_validator: Optional[AgentsExecutionActivityStepStartedPayload] = None
+    # data type: AgentsExecutionActivityStepCompletedPayload
+    oneof_schema_5_validator: Optional[AgentsExecutionActivityStepCompletedPayload] = None
+    # data type: AgentsExecutionActivityTransitionedNodePayload
+    oneof_schema_6_validator: Optional[AgentsExecutionActivityTransitionedNodePayload] = None
+    # data type: AgentsExecutionActivityStatusChangedPayload
+    oneof_schema_7_validator: Optional[AgentsExecutionActivityStatusChangedPayload] = None
+    # data type: AgentsExecutionActivityActionStartedPayload
+    oneof_schema_8_validator: Optional[AgentsExecutionActivityActionStartedPayload] = None
+    # data type: AgentsExecutionActivityActionCompletedPayload
+    oneof_schema_9_validator: Optional[AgentsExecutionActivityActionCompletedPayload] = None
+    # data type: AgentsExecutionActivityActionFailedPayload
+    oneof_schema_10_validator: Optional[AgentsExecutionActivityActionFailedPayload] = None
+    # data type: AgentsExecutionActivityUserMessageReceivedPayload
+    oneof_schema_11_validator: Optional[AgentsExecutionActivityUserMessageReceivedPayload] = None
+    # data type: AgentsExecutionActivityFileAddedPayload
+    oneof_schema_12_validator: Optional[AgentsExecutionActivityFileAddedPayload] = None
+    # data type: AgentsExecutionActivityWorkflowUpdatedPayload
+    oneof_schema_13_validator: Optional[AgentsExecutionActivityWorkflowUpdatedPayload] = None
+    # data type: AgentsExecutionActivityPlaywrightScriptGeneratedPayload
+    oneof_schema_14_validator: Optional[AgentsExecutionActivityPlaywrightScriptGeneratedPayload] = None
+    actual_instance: Optional[Union[AgentsExecutionActivityActionCompletedPayload, AgentsExecutionActivityActionFailedPayload, AgentsExecutionActivityActionStartedPayload, AgentsExecutionActivityFileAddedPayload, AgentsExecutionActivityGenericPayload, AgentsExecutionActivityPlaywrightScriptGeneratedPayload, AgentsExecutionActivityReasoningPayload, AgentsExecutionActivityStatusChangedPayload, AgentsExecutionActivityStepCompletedPayload, AgentsExecutionActivityStepStartedPayload, AgentsExecutionActivityTransitionedNodePayload, AgentsExecutionActivityUserMessageReceivedPayload, AgentsExecutionActivityWorkflowUpdatedPayload, AgentsExecutionTerminalPayload]] = None
+    one_of_schemas: Set[str] = { "AgentsExecutionActivityActionCompletedPayload", "AgentsExecutionActivityActionFailedPayload", "AgentsExecutionActivityActionStartedPayload", "AgentsExecutionActivityFileAddedPayload", "AgentsExecutionActivityGenericPayload", "AgentsExecutionActivityPlaywrightScriptGeneratedPayload", "AgentsExecutionActivityReasoningPayload", "AgentsExecutionActivityStatusChangedPayload", "AgentsExecutionActivityStepCompletedPayload", "AgentsExecutionActivityStepStartedPayload", "AgentsExecutionActivityTransitionedNodePayload", "AgentsExecutionActivityUserMessageReceivedPayload", "AgentsExecutionActivityWorkflowUpdatedPayload", "AgentsExecutionTerminalPayload" }
 
     model_config = ConfigDict(
         validate_assignment=True,
@@ -90,72 +96,82 @@ class AgentsExecutionActivityPayloadUnion(BaseModel):
         instance = AgentsExecutionActivityPayloadUnion.model_construct()
         error_messages = []
         match = 0
-        # validate data type: ActivityPayloadUnionTerminal
-        if not isinstance(v, ActivityPayloadUnionTerminal):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `ActivityPayloadUnionTerminal`")
+        # validate data type: AgentsExecutionTerminalPayload
+        if not isinstance(v, AgentsExecutionTerminalPayload):
+            error_messages.append(f"Error! Input type `{type(v)}` is not `AgentsExecutionTerminalPayload`")
         else:
             match += 1
-        # validate data type: ActivityPayloadUnionGeneric
-        if not isinstance(v, ActivityPayloadUnionGeneric):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `ActivityPayloadUnionGeneric`")
+        # validate data type: AgentsExecutionActivityGenericPayload
+        if not isinstance(v, AgentsExecutionActivityGenericPayload):
+            error_messages.append(f"Error! Input type `{type(v)}` is not `AgentsExecutionActivityGenericPayload`")
         else:
             match += 1
-        # validate data type: ActivityPayloadUnionStepStarted
-        if not isinstance(v, ActivityPayloadUnionStepStarted):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `ActivityPayloadUnionStepStarted`")
+        # validate data type: AgentsExecutionActivityReasoningPayload
+        if not isinstance(v, AgentsExecutionActivityReasoningPayload):
+            error_messages.append(f"Error! Input type `{type(v)}` is not `AgentsExecutionActivityReasoningPayload`")
         else:
             match += 1
-        # validate data type: ActivityPayloadUnionStepCompleted
-        if not isinstance(v, ActivityPayloadUnionStepCompleted):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `ActivityPayloadUnionStepCompleted`")
+        # validate data type: AgentsExecutionActivityStepStartedPayload
+        if not isinstance(v, AgentsExecutionActivityStepStartedPayload):
+            error_messages.append(f"Error! Input type `{type(v)}` is not `AgentsExecutionActivityStepStartedPayload`")
         else:
             match += 1
-        # validate data type: ActivityPayloadUnionTransitionedNode
-        if not isinstance(v, ActivityPayloadUnionTransitionedNode):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `ActivityPayloadUnionTransitionedNode`")
+        # validate data type: AgentsExecutionActivityStepCompletedPayload
+        if not isinstance(v, AgentsExecutionActivityStepCompletedPayload):
+            error_messages.append(f"Error! Input type `{type(v)}` is not `AgentsExecutionActivityStepCompletedPayload`")
         else:
             match += 1
-        # validate data type: ActivityPayloadUnionStatusChanged
-        if not isinstance(v, ActivityPayloadUnionStatusChanged):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `ActivityPayloadUnionStatusChanged`")
+        # validate data type: AgentsExecutionActivityTransitionedNodePayload
+        if not isinstance(v, AgentsExecutionActivityTransitionedNodePayload):
+            error_messages.append(f"Error! Input type `{type(v)}` is not `AgentsExecutionActivityTransitionedNodePayload`")
         else:
             match += 1
-        # validate data type: ActivityPayloadUnionActionStarted
-        if not isinstance(v, ActivityPayloadUnionActionStarted):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `ActivityPayloadUnionActionStarted`")
+        # validate data type: AgentsExecutionActivityStatusChangedPayload
+        if not isinstance(v, AgentsExecutionActivityStatusChangedPayload):
+            error_messages.append(f"Error! Input type `{type(v)}` is not `AgentsExecutionActivityStatusChangedPayload`")
         else:
             match += 1
-        # validate data type: ActivityPayloadUnionActionCompleted
-        if not isinstance(v, ActivityPayloadUnionActionCompleted):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `ActivityPayloadUnionActionCompleted`")
+        # validate data type: AgentsExecutionActivityActionStartedPayload
+        if not isinstance(v, AgentsExecutionActivityActionStartedPayload):
+            error_messages.append(f"Error! Input type `{type(v)}` is not `AgentsExecutionActivityActionStartedPayload`")
         else:
             match += 1
-        # validate data type: ActivityPayloadUnionActionFailed
-        if not isinstance(v, ActivityPayloadUnionActionFailed):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `ActivityPayloadUnionActionFailed`")
+        # validate data type: AgentsExecutionActivityActionCompletedPayload
+        if not isinstance(v, AgentsExecutionActivityActionCompletedPayload):
+            error_messages.append(f"Error! Input type `{type(v)}` is not `AgentsExecutionActivityActionCompletedPayload`")
         else:
             match += 1
-        # validate data type: ActivityPayloadUnionUserMessageReceived
-        if not isinstance(v, ActivityPayloadUnionUserMessageReceived):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `ActivityPayloadUnionUserMessageReceived`")
+        # validate data type: AgentsExecutionActivityActionFailedPayload
+        if not isinstance(v, AgentsExecutionActivityActionFailedPayload):
+            error_messages.append(f"Error! Input type `{type(v)}` is not `AgentsExecutionActivityActionFailedPayload`")
         else:
             match += 1
-        # validate data type: ActivityPayloadUnionFileAdded
-        if not isinstance(v, ActivityPayloadUnionFileAdded):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `ActivityPayloadUnionFileAdded`")
+        # validate data type: AgentsExecutionActivityUserMessageReceivedPayload
+        if not isinstance(v, AgentsExecutionActivityUserMessageReceivedPayload):
+            error_messages.append(f"Error! Input type `{type(v)}` is not `AgentsExecutionActivityUserMessageReceivedPayload`")
         else:
             match += 1
-        # validate data type: ActivityPayloadUnionGraphUpdated
-        if not isinstance(v, ActivityPayloadUnionGraphUpdated):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `ActivityPayloadUnionGraphUpdated`")
+        # validate data type: AgentsExecutionActivityFileAddedPayload
+        if not isinstance(v, AgentsExecutionActivityFileAddedPayload):
+            error_messages.append(f"Error! Input type `{type(v)}` is not `AgentsExecutionActivityFileAddedPayload`")
+        else:
+            match += 1
+        # validate data type: AgentsExecutionActivityWorkflowUpdatedPayload
+        if not isinstance(v, AgentsExecutionActivityWorkflowUpdatedPayload):
+            error_messages.append(f"Error! Input type `{type(v)}` is not `AgentsExecutionActivityWorkflowUpdatedPayload`")
+        else:
+            match += 1
+        # validate data type: AgentsExecutionActivityPlaywrightScriptGeneratedPayload
+        if not isinstance(v, AgentsExecutionActivityPlaywrightScriptGeneratedPayload):
+            error_messages.append(f"Error! Input type `{type(v)}` is not `AgentsExecutionActivityPlaywrightScriptGeneratedPayload`")
         else:
             match += 1
         if match > 1:
             # more than 1 match
-            raise ValueError("Multiple matches found when setting `actual_instance` in AgentsExecutionActivityPayloadUnion with oneOf schemas: ActivityPayloadUnionActionCompleted, ActivityPayloadUnionActionFailed, ActivityPayloadUnionActionStarted, ActivityPayloadUnionFileAdded, ActivityPayloadUnionGeneric, ActivityPayloadUnionGraphUpdated, ActivityPayloadUnionStatusChanged, ActivityPayloadUnionStepCompleted, ActivityPayloadUnionStepStarted, ActivityPayloadUnionTerminal, ActivityPayloadUnionTransitionedNode, ActivityPayloadUnionUserMessageReceived. Details: " + ", ".join(error_messages))
+            raise ValueError("Multiple matches found when setting `actual_instance` in AgentsExecutionActivityPayloadUnion with oneOf schemas: AgentsExecutionActivityActionCompletedPayload, AgentsExecutionActivityActionFailedPayload, AgentsExecutionActivityActionStartedPayload, AgentsExecutionActivityFileAddedPayload, AgentsExecutionActivityGenericPayload, AgentsExecutionActivityPlaywrightScriptGeneratedPayload, AgentsExecutionActivityReasoningPayload, AgentsExecutionActivityStatusChangedPayload, AgentsExecutionActivityStepCompletedPayload, AgentsExecutionActivityStepStartedPayload, AgentsExecutionActivityTransitionedNodePayload, AgentsExecutionActivityUserMessageReceivedPayload, AgentsExecutionActivityWorkflowUpdatedPayload, AgentsExecutionTerminalPayload. Details: " + ", ".join(error_messages))
         elif match == 0:
             # no match
-            raise ValueError("No match found when setting `actual_instance` in AgentsExecutionActivityPayloadUnion with oneOf schemas: ActivityPayloadUnionActionCompleted, ActivityPayloadUnionActionFailed, ActivityPayloadUnionActionStarted, ActivityPayloadUnionFileAdded, ActivityPayloadUnionGeneric, ActivityPayloadUnionGraphUpdated, ActivityPayloadUnionStatusChanged, ActivityPayloadUnionStepCompleted, ActivityPayloadUnionStepStarted, ActivityPayloadUnionTerminal, ActivityPayloadUnionTransitionedNode, ActivityPayloadUnionUserMessageReceived. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when setting `actual_instance` in AgentsExecutionActivityPayloadUnion with oneOf schemas: AgentsExecutionActivityActionCompletedPayload, AgentsExecutionActivityActionFailedPayload, AgentsExecutionActivityActionStartedPayload, AgentsExecutionActivityFileAddedPayload, AgentsExecutionActivityGenericPayload, AgentsExecutionActivityPlaywrightScriptGeneratedPayload, AgentsExecutionActivityReasoningPayload, AgentsExecutionActivityStatusChangedPayload, AgentsExecutionActivityStepCompletedPayload, AgentsExecutionActivityStepStartedPayload, AgentsExecutionActivityTransitionedNodePayload, AgentsExecutionActivityUserMessageReceivedPayload, AgentsExecutionActivityWorkflowUpdatedPayload, AgentsExecutionTerminalPayload. Details: " + ", ".join(error_messages))
         else:
             return v
 
@@ -170,85 +186,97 @@ class AgentsExecutionActivityPayloadUnion(BaseModel):
         error_messages = []
         match = 0
 
-        # deserialize data into ActivityPayloadUnionTerminal
+        # deserialize data into AgentsExecutionTerminalPayload
         try:
-            instance.actual_instance = ActivityPayloadUnionTerminal.from_json(json_str)
+            instance.actual_instance = AgentsExecutionTerminalPayload.from_json(json_str)
             match += 1
         except (ValidationError, ValueError) as e:
             error_messages.append(str(e))
-        # deserialize data into ActivityPayloadUnionGeneric
+        # deserialize data into AgentsExecutionActivityGenericPayload
         try:
-            instance.actual_instance = ActivityPayloadUnionGeneric.from_json(json_str)
+            instance.actual_instance = AgentsExecutionActivityGenericPayload.from_json(json_str)
             match += 1
         except (ValidationError, ValueError) as e:
             error_messages.append(str(e))
-        # deserialize data into ActivityPayloadUnionStepStarted
+        # deserialize data into AgentsExecutionActivityReasoningPayload
         try:
-            instance.actual_instance = ActivityPayloadUnionStepStarted.from_json(json_str)
+            instance.actual_instance = AgentsExecutionActivityReasoningPayload.from_json(json_str)
             match += 1
         except (ValidationError, ValueError) as e:
             error_messages.append(str(e))
-        # deserialize data into ActivityPayloadUnionStepCompleted
+        # deserialize data into AgentsExecutionActivityStepStartedPayload
         try:
-            instance.actual_instance = ActivityPayloadUnionStepCompleted.from_json(json_str)
+            instance.actual_instance = AgentsExecutionActivityStepStartedPayload.from_json(json_str)
             match += 1
         except (ValidationError, ValueError) as e:
             error_messages.append(str(e))
-        # deserialize data into ActivityPayloadUnionTransitionedNode
+        # deserialize data into AgentsExecutionActivityStepCompletedPayload
         try:
-            instance.actual_instance = ActivityPayloadUnionTransitionedNode.from_json(json_str)
+            instance.actual_instance = AgentsExecutionActivityStepCompletedPayload.from_json(json_str)
             match += 1
         except (ValidationError, ValueError) as e:
             error_messages.append(str(e))
-        # deserialize data into ActivityPayloadUnionStatusChanged
+        # deserialize data into AgentsExecutionActivityTransitionedNodePayload
         try:
-            instance.actual_instance = ActivityPayloadUnionStatusChanged.from_json(json_str)
+            instance.actual_instance = AgentsExecutionActivityTransitionedNodePayload.from_json(json_str)
             match += 1
         except (ValidationError, ValueError) as e:
             error_messages.append(str(e))
-        # deserialize data into ActivityPayloadUnionActionStarted
+        # deserialize data into AgentsExecutionActivityStatusChangedPayload
         try:
-            instance.actual_instance = ActivityPayloadUnionActionStarted.from_json(json_str)
+            instance.actual_instance = AgentsExecutionActivityStatusChangedPayload.from_json(json_str)
             match += 1
         except (ValidationError, ValueError) as e:
             error_messages.append(str(e))
-        # deserialize data into ActivityPayloadUnionActionCompleted
+        # deserialize data into AgentsExecutionActivityActionStartedPayload
         try:
-            instance.actual_instance = ActivityPayloadUnionActionCompleted.from_json(json_str)
+            instance.actual_instance = AgentsExecutionActivityActionStartedPayload.from_json(json_str)
             match += 1
         except (ValidationError, ValueError) as e:
             error_messages.append(str(e))
-        # deserialize data into ActivityPayloadUnionActionFailed
+        # deserialize data into AgentsExecutionActivityActionCompletedPayload
         try:
-            instance.actual_instance = ActivityPayloadUnionActionFailed.from_json(json_str)
+            instance.actual_instance = AgentsExecutionActivityActionCompletedPayload.from_json(json_str)
             match += 1
         except (ValidationError, ValueError) as e:
             error_messages.append(str(e))
-        # deserialize data into ActivityPayloadUnionUserMessageReceived
+        # deserialize data into AgentsExecutionActivityActionFailedPayload
         try:
-            instance.actual_instance = ActivityPayloadUnionUserMessageReceived.from_json(json_str)
+            instance.actual_instance = AgentsExecutionActivityActionFailedPayload.from_json(json_str)
             match += 1
         except (ValidationError, ValueError) as e:
             error_messages.append(str(e))
-        # deserialize data into ActivityPayloadUnionFileAdded
+        # deserialize data into AgentsExecutionActivityUserMessageReceivedPayload
         try:
-            instance.actual_instance = ActivityPayloadUnionFileAdded.from_json(json_str)
+            instance.actual_instance = AgentsExecutionActivityUserMessageReceivedPayload.from_json(json_str)
             match += 1
         except (ValidationError, ValueError) as e:
             error_messages.append(str(e))
-        # deserialize data into ActivityPayloadUnionGraphUpdated
+        # deserialize data into AgentsExecutionActivityFileAddedPayload
         try:
-            instance.actual_instance = ActivityPayloadUnionGraphUpdated.from_json(json_str)
+            instance.actual_instance = AgentsExecutionActivityFileAddedPayload.from_json(json_str)
+            match += 1
+        except (ValidationError, ValueError) as e:
+            error_messages.append(str(e))
+        # deserialize data into AgentsExecutionActivityWorkflowUpdatedPayload
+        try:
+            instance.actual_instance = AgentsExecutionActivityWorkflowUpdatedPayload.from_json(json_str)
+            match += 1
+        except (ValidationError, ValueError) as e:
+            error_messages.append(str(e))
+        # deserialize data into AgentsExecutionActivityPlaywrightScriptGeneratedPayload
+        try:
+            instance.actual_instance = AgentsExecutionActivityPlaywrightScriptGeneratedPayload.from_json(json_str)
             match += 1
         except (ValidationError, ValueError) as e:
             error_messages.append(str(e))
 
         if match > 1:
             # more than 1 match
-            raise ValueError("Multiple matches found when deserializing the JSON string into AgentsExecutionActivityPayloadUnion with oneOf schemas: ActivityPayloadUnionActionCompleted, ActivityPayloadUnionActionFailed, ActivityPayloadUnionActionStarted, ActivityPayloadUnionFileAdded, ActivityPayloadUnionGeneric, ActivityPayloadUnionGraphUpdated, ActivityPayloadUnionStatusChanged, ActivityPayloadUnionStepCompleted, ActivityPayloadUnionStepStarted, ActivityPayloadUnionTerminal, ActivityPayloadUnionTransitionedNode, ActivityPayloadUnionUserMessageReceived. Details: " + ", ".join(error_messages))
+            raise ValueError("Multiple matches found when deserializing the JSON string into AgentsExecutionActivityPayloadUnion with oneOf schemas: AgentsExecutionActivityActionCompletedPayload, AgentsExecutionActivityActionFailedPayload, AgentsExecutionActivityActionStartedPayload, AgentsExecutionActivityFileAddedPayload, AgentsExecutionActivityGenericPayload, AgentsExecutionActivityPlaywrightScriptGeneratedPayload, AgentsExecutionActivityReasoningPayload, AgentsExecutionActivityStatusChangedPayload, AgentsExecutionActivityStepCompletedPayload, AgentsExecutionActivityStepStartedPayload, AgentsExecutionActivityTransitionedNodePayload, AgentsExecutionActivityUserMessageReceivedPayload, AgentsExecutionActivityWorkflowUpdatedPayload, AgentsExecutionTerminalPayload. Details: " + ", ".join(error_messages))
         elif match == 0:
             # no match
-            raise ValueError("No match found when deserializing the JSON string into AgentsExecutionActivityPayloadUnion with oneOf schemas: ActivityPayloadUnionActionCompleted, ActivityPayloadUnionActionFailed, ActivityPayloadUnionActionStarted, ActivityPayloadUnionFileAdded, ActivityPayloadUnionGeneric, ActivityPayloadUnionGraphUpdated, ActivityPayloadUnionStatusChanged, ActivityPayloadUnionStepCompleted, ActivityPayloadUnionStepStarted, ActivityPayloadUnionTerminal, ActivityPayloadUnionTransitionedNode, ActivityPayloadUnionUserMessageReceived. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when deserializing the JSON string into AgentsExecutionActivityPayloadUnion with oneOf schemas: AgentsExecutionActivityActionCompletedPayload, AgentsExecutionActivityActionFailedPayload, AgentsExecutionActivityActionStartedPayload, AgentsExecutionActivityFileAddedPayload, AgentsExecutionActivityGenericPayload, AgentsExecutionActivityPlaywrightScriptGeneratedPayload, AgentsExecutionActivityReasoningPayload, AgentsExecutionActivityStatusChangedPayload, AgentsExecutionActivityStepCompletedPayload, AgentsExecutionActivityStepStartedPayload, AgentsExecutionActivityTransitionedNodePayload, AgentsExecutionActivityUserMessageReceivedPayload, AgentsExecutionActivityWorkflowUpdatedPayload, AgentsExecutionTerminalPayload. Details: " + ", ".join(error_messages))
         else:
             return instance
 
@@ -262,7 +290,7 @@ class AgentsExecutionActivityPayloadUnion(BaseModel):
         else:
             return json.dumps(self.actual_instance)
 
-    def to_dict(self) -> Optional[Union[Dict[str, Any], ActivityPayloadUnionActionCompleted, ActivityPayloadUnionActionFailed, ActivityPayloadUnionActionStarted, ActivityPayloadUnionFileAdded, ActivityPayloadUnionGeneric, ActivityPayloadUnionGraphUpdated, ActivityPayloadUnionStatusChanged, ActivityPayloadUnionStepCompleted, ActivityPayloadUnionStepStarted, ActivityPayloadUnionTerminal, ActivityPayloadUnionTransitionedNode, ActivityPayloadUnionUserMessageReceived]]:
+    def to_dict(self) -> Optional[Union[Dict[str, Any], AgentsExecutionActivityActionCompletedPayload, AgentsExecutionActivityActionFailedPayload, AgentsExecutionActivityActionStartedPayload, AgentsExecutionActivityFileAddedPayload, AgentsExecutionActivityGenericPayload, AgentsExecutionActivityPlaywrightScriptGeneratedPayload, AgentsExecutionActivityReasoningPayload, AgentsExecutionActivityStatusChangedPayload, AgentsExecutionActivityStepCompletedPayload, AgentsExecutionActivityStepStartedPayload, AgentsExecutionActivityTransitionedNodePayload, AgentsExecutionActivityUserMessageReceivedPayload, AgentsExecutionActivityWorkflowUpdatedPayload, AgentsExecutionTerminalPayload]]:
         """Returns the dict representation of the actual instance"""
         if self.actual_instance is None:
             return None

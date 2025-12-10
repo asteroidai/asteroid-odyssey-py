@@ -17,8 +17,10 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, StrictStr
-from typing import Any, ClassVar, Dict, List
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr, field_validator
+from typing import Any, ClassVar, Dict, List, Optional
+from asteroid_odyssey.agents_v2_gen.models.agents_execution_action_name import AgentsExecutionActionName
+from asteroid_odyssey.agents_v2_gen.models.agents_execution_activity_action_completed_info import AgentsExecutionActivityActionCompletedInfo
 from typing import Optional, Set
 from typing_extensions import Self
 
@@ -26,8 +28,20 @@ class AgentsExecutionActivityActionCompletedPayload(BaseModel):
     """
     AgentsExecutionActivityActionCompletedPayload
     """ # noqa: E501
+    action_id: StrictStr = Field(alias="actionId")
+    action_name: AgentsExecutionActionName = Field(alias="actionName")
+    activity_type: StrictStr = Field(alias="activityType")
+    duration: Optional[StrictInt] = None
+    info: Optional[AgentsExecutionActivityActionCompletedInfo] = None
     message: StrictStr
-    __properties: ClassVar[List[str]] = ["message"]
+    __properties: ClassVar[List[str]] = ["actionId", "actionName", "activityType", "duration", "info", "message"]
+
+    @field_validator('activity_type')
+    def activity_type_validate_enum(cls, value):
+        """Validates the enum"""
+        if value not in set(['action_completed']):
+            raise ValueError("must be one of enum values ('action_completed')")
+        return value
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -68,6 +82,9 @@ class AgentsExecutionActivityActionCompletedPayload(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # override the default output from pydantic by calling `to_dict()` of info
+        if self.info:
+            _dict['info'] = self.info.to_dict()
         return _dict
 
     @classmethod
@@ -80,6 +97,11 @@ class AgentsExecutionActivityActionCompletedPayload(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
+            "actionId": obj.get("actionId"),
+            "actionName": obj.get("actionName"),
+            "activityType": obj.get("activityType"),
+            "duration": obj.get("duration"),
+            "info": AgentsExecutionActivityActionCompletedInfo.from_dict(obj["info"]) if obj.get("info") is not None else None,
             "message": obj.get("message")
         })
         return _obj

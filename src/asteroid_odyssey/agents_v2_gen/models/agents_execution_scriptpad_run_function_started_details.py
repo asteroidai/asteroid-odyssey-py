@@ -18,24 +18,24 @@ import re  # noqa: F401
 import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictStr, field_validator
-from typing import Any, ClassVar, Dict, List
-from asteroid_odyssey.agents_v2_gen.models.agents_execution_activity_action_completed_payload import AgentsExecutionActivityActionCompletedPayload
+from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
 
-class ActivityPayloadUnionActionCompleted(BaseModel):
+class AgentsExecutionScriptpadRunFunctionStartedDetails(BaseModel):
     """
-    ActivityPayloadUnionActionCompleted
+    AgentsExecutionScriptpadRunFunctionStartedDetails
     """ # noqa: E501
-    activity_type: StrictStr = Field(alias="activityType")
-    data: AgentsExecutionActivityActionCompletedPayload
-    __properties: ClassVar[List[str]] = ["activityType", "data"]
+    action_name: StrictStr = Field(alias="actionName")
+    arguments: Optional[Any]
+    function_name: StrictStr = Field(alias="functionName")
+    __properties: ClassVar[List[str]] = ["actionName", "arguments", "functionName"]
 
-    @field_validator('activity_type')
-    def activity_type_validate_enum(cls, value):
+    @field_validator('action_name')
+    def action_name_validate_enum(cls, value):
         """Validates the enum"""
-        if value not in set(['action_completed']):
-            raise ValueError("must be one of enum values ('action_completed')")
+        if value not in set(['scriptpad_run_function']):
+            raise ValueError("must be one of enum values ('scriptpad_run_function')")
         return value
 
     model_config = ConfigDict(
@@ -56,7 +56,7 @@ class ActivityPayloadUnionActionCompleted(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of ActivityPayloadUnionActionCompleted from a JSON string"""
+        """Create an instance of AgentsExecutionScriptpadRunFunctionStartedDetails from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -77,14 +77,16 @@ class ActivityPayloadUnionActionCompleted(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of data
-        if self.data:
-            _dict['data'] = self.data.to_dict()
+        # set to None if arguments (nullable) is None
+        # and model_fields_set contains the field
+        if self.arguments is None and "arguments" in self.model_fields_set:
+            _dict['arguments'] = None
+
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of ActivityPayloadUnionActionCompleted from a dict"""
+        """Create an instance of AgentsExecutionScriptpadRunFunctionStartedDetails from a dict"""
         if obj is None:
             return None
 
@@ -92,8 +94,9 @@ class ActivityPayloadUnionActionCompleted(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "activityType": obj.get("activityType"),
-            "data": AgentsExecutionActivityActionCompletedPayload.from_dict(obj["data"]) if obj.get("data") is not None else None
+            "actionName": obj.get("actionName"),
+            "arguments": obj.get("arguments"),
+            "functionName": obj.get("functionName")
         })
         return _obj
 

@@ -20,19 +20,21 @@ import json
 from pydantic import BaseModel, ConfigDict, Field
 from typing import Any, ClassVar, Dict, List, Optional
 from asteroid_odyssey.agents_v2_gen.models.agents_execution_node_details import AgentsExecutionNodeDetails
+from asteroid_odyssey.agents_v2_gen.models.agents_execution_rules_details import AgentsExecutionRulesDetails
 from asteroid_odyssey.agents_v2_gen.models.agents_execution_transition_details import AgentsExecutionTransitionDetails
 from asteroid_odyssey.agents_v2_gen.models.agents_execution_update_type import AgentsExecutionUpdateType
 from typing import Optional, Set
 from typing_extensions import Self
 
-class AgentsExecutionGraphUpdate(BaseModel):
+class AgentsExecutionWorkflowUpdate(BaseModel):
     """
-    AgentsExecutionGraphUpdate
+    AgentsExecutionWorkflowUpdate
     """ # noqa: E501
     node_details: Optional[AgentsExecutionNodeDetails] = Field(default=None, alias="nodeDetails")
+    rules_details: Optional[AgentsExecutionRulesDetails] = Field(default=None, alias="rulesDetails")
     transition_details: Optional[AgentsExecutionTransitionDetails] = Field(default=None, alias="transitionDetails")
     update_type: AgentsExecutionUpdateType = Field(alias="updateType")
-    __properties: ClassVar[List[str]] = ["nodeDetails", "transitionDetails", "updateType"]
+    __properties: ClassVar[List[str]] = ["nodeDetails", "rulesDetails", "transitionDetails", "updateType"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -52,7 +54,7 @@ class AgentsExecutionGraphUpdate(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of AgentsExecutionGraphUpdate from a JSON string"""
+        """Create an instance of AgentsExecutionWorkflowUpdate from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -76,6 +78,9 @@ class AgentsExecutionGraphUpdate(BaseModel):
         # override the default output from pydantic by calling `to_dict()` of node_details
         if self.node_details:
             _dict['nodeDetails'] = self.node_details.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of rules_details
+        if self.rules_details:
+            _dict['rulesDetails'] = self.rules_details.to_dict()
         # override the default output from pydantic by calling `to_dict()` of transition_details
         if self.transition_details:
             _dict['transitionDetails'] = self.transition_details.to_dict()
@@ -83,7 +88,7 @@ class AgentsExecutionGraphUpdate(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of AgentsExecutionGraphUpdate from a dict"""
+        """Create an instance of AgentsExecutionWorkflowUpdate from a dict"""
         if obj is None:
             return None
 
@@ -92,6 +97,7 @@ class AgentsExecutionGraphUpdate(BaseModel):
 
         _obj = cls.model_validate({
             "nodeDetails": AgentsExecutionNodeDetails.from_dict(obj["nodeDetails"]) if obj.get("nodeDetails") is not None else None,
+            "rulesDetails": AgentsExecutionRulesDetails.from_dict(obj["rulesDetails"]) if obj.get("rulesDetails") is not None else None,
             "transitionDetails": AgentsExecutionTransitionDetails.from_dict(obj["transitionDetails"]) if obj.get("transitionDetails") is not None else None,
             "updateType": obj.get("updateType")
         })

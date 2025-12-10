@@ -26,13 +26,21 @@ class AgentsExecutionActivityFileAddedPayload(BaseModel):
     """
     AgentsExecutionActivityFileAddedPayload
     """ # noqa: E501
+    activity_type: StrictStr = Field(alias="activityType")
     file_id: StrictStr = Field(alias="fileId")
     file_name: StrictStr = Field(alias="fileName")
     file_size: StrictInt = Field(alias="fileSize")
     mime_type: StrictStr = Field(alias="mimeType")
     presigned_url: StrictStr = Field(alias="presignedUrl")
     source: StrictStr
-    __properties: ClassVar[List[str]] = ["fileId", "fileName", "fileSize", "mimeType", "presignedUrl", "source"]
+    __properties: ClassVar[List[str]] = ["activityType", "fileId", "fileName", "fileSize", "mimeType", "presignedUrl", "source"]
+
+    @field_validator('activity_type')
+    def activity_type_validate_enum(cls, value):
+        """Validates the enum"""
+        if value not in set(['file_added']):
+            raise ValueError("must be one of enum values ('file_added')")
+        return value
 
     @field_validator('source')
     def source_validate_enum(cls, value):
@@ -92,6 +100,7 @@ class AgentsExecutionActivityFileAddedPayload(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
+            "activityType": obj.get("activityType"),
             "fileId": obj.get("fileId"),
             "fileName": obj.get("fileName"),
             "fileSize": obj.get("fileSize"),

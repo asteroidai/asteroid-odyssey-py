@@ -43,9 +43,8 @@ class AgentProfile(BaseModel):
     cookies: List[Cookie] = Field(description="List of cookies associated with this agent profile")
     created_at: datetime = Field(description="The date and time the agent profile was created")
     updated_at: datetime = Field(description="The last update time of the agent profile")
-    tracing_snapshots: StrictBool = Field(description="Whether to enable tracing snapshots for the profile")
     extra_stealth: StrictBool = Field(description="Whether to enable extra stealth for the profile")
-    __properties: ClassVar[List[str]] = ["id", "name", "description", "organization_id", "proxy_cc", "proxy_type", "captcha_solver_active", "sticky_ip", "credentials", "cookies", "created_at", "updated_at", "tracing_snapshots", "extra_stealth"]
+    __properties: ClassVar[List[str]] = ["id", "name", "description", "organization_id", "proxy_cc", "proxy_type", "captcha_solver_active", "sticky_ip", "credentials", "cookies", "created_at", "updated_at", "extra_stealth"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -124,7 +123,6 @@ class AgentProfile(BaseModel):
             "cookies": [Cookie.from_dict(_item) for _item in obj["cookies"]] if obj.get("cookies") is not None else None,
             "created_at": obj.get("created_at"),
             "updated_at": obj.get("updated_at"),
-            "tracing_snapshots": obj.get("tracing_snapshots"),
             "extra_stealth": obj.get("extra_stealth")
         })
         return _obj

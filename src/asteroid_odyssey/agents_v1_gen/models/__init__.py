@@ -32,4 +32,3 @@ from asteroid_odyssey.agents_v1_gen.models.proxy_type import ProxyType
 from asteroid_odyssey.agents_v1_gen.models.status import Status
 from asteroid_odyssey.agents_v1_gen.models.structured_agent_execution_request import StructuredAgentExecutionRequest
 from asteroid_odyssey.agents_v1_gen.models.update_agent_profile_request import UpdateAgentProfileRequest
-from asteroid_odyssey.agents_v1_gen.models.upload_execution_files200_response import UploadExecutionFiles200Response

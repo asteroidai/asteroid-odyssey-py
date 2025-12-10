@@ -17,7 +17,7 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, StrictStr, field_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictStr, field_validator
 from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
@@ -26,9 +26,17 @@ class AgentsExecutionTerminalPayload(BaseModel):
     """
     AgentsExecutionTerminalPayload
     """ # noqa: E501
+    activity_type: StrictStr = Field(alias="activityType")
     message: Optional[StrictStr] = None
     reason: StrictStr
-    __properties: ClassVar[List[str]] = ["message", "reason"]
+    __properties: ClassVar[List[str]] = ["activityType", "message", "reason"]
+
+    @field_validator('activity_type')
+    def activity_type_validate_enum(cls, value):
+        """Validates the enum"""
+        if value not in set(['terminal']):
+            raise ValueError("must be one of enum values ('terminal')")
+        return value
 
     @field_validator('reason')
     def reason_validate_enum(cls, value):
@@ -88,6 +96,7 @@ class AgentsExecutionTerminalPayload(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
+            "activityType": obj.get("activityType"),
             "message": obj.get("message"),
             "reason": obj.get("reason")
         })

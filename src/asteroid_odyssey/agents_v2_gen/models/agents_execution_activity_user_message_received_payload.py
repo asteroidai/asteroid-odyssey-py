@@ -17,7 +17,7 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, Field, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictStr, field_validator
 from typing import Any, ClassVar, Dict, List
 from typing import Optional, Set
 from typing_extensions import Self
@@ -26,9 +26,17 @@ class AgentsExecutionActivityUserMessageReceivedPayload(BaseModel):
     """
     AgentsExecutionActivityUserMessageReceivedPayload
     """ # noqa: E501
+    activity_type: StrictStr = Field(alias="activityType")
     message: StrictStr
     user_uuid: StrictStr = Field(alias="userUUID")
-    __properties: ClassVar[List[str]] = ["message", "userUUID"]
+    __properties: ClassVar[List[str]] = ["activityType", "message", "userUUID"]
+
+    @field_validator('activity_type')
+    def activity_type_validate_enum(cls, value):
+        """Validates the enum"""
+        if value not in set(['user_message_received']):
+            raise ValueError("must be one of enum values ('user_message_received')")
+        return value
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -81,6 +89,7 @@ class AgentsExecutionActivityUserMessageReceivedPayload(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
+            "activityType": obj.get("activityType"),
             "message": obj.get("message"),
             "userUUID": obj.get("userUUID")
         })

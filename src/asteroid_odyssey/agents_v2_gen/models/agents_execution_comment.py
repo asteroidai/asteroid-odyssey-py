@@ -17,29 +17,24 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr, field_validator
+from datetime import datetime
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
-from asteroid_odyssey.agents_v2_gen.models.agents_execution_action_name import AgentsExecutionActionName
 from typing import Optional, Set
 from typing_extensions import Self
 
-class AgentsExecutionActivityActionFailedPayload(BaseModel):
+class AgentsExecutionComment(BaseModel):
     """
-    AgentsExecutionActivityActionFailedPayload
+    User comment on an execution
     """ # noqa: E501
-    action_id: StrictStr = Field(alias="actionId")
-    action_name: AgentsExecutionActionName = Field(alias="actionName")
-    activity_type: StrictStr = Field(alias="activityType")
-    duration: Optional[StrictInt] = None
-    message: StrictStr
-    __properties: ClassVar[List[str]] = ["actionId", "actionName", "activityType", "duration", "message"]
-
-    @field_validator('activity_type')
-    def activity_type_validate_enum(cls, value):
-        """Validates the enum"""
-        if value not in set(['action_failed']):
-            raise ValueError("must be one of enum values ('action_failed')")
-        return value
+    content: StrictStr = Field(description="Comment content")
+    created_at: datetime = Field(description="When the comment was created", alias="createdAt")
+    execution_id: StrictStr = Field(description="Execution this comment belongs to", alias="executionId")
+    id: StrictStr = Field(description="Unique identifier for the comment")
+    public: StrictBool = Field(description="Whether the comment is public")
+    updated_at: Optional[datetime] = Field(default=None, description="When the comment was last updated", alias="updatedAt")
+    user_id: StrictStr = Field(description="User who created the comment", alias="userId")
+    __properties: ClassVar[List[str]] = ["content", "createdAt", "executionId", "id", "public", "updatedAt", "userId"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -59,7 +54,7 @@ class AgentsExecutionActivityActionFailedPayload(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of AgentsExecutionActivityActionFailedPayload from a JSON string"""
+        """Create an instance of AgentsExecutionComment from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -84,7 +79,7 @@ class AgentsExecutionActivityActionFailedPayload(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of AgentsExecutionActivityActionFailedPayload from a dict"""
+        """Create an instance of AgentsExecutionComment from a dict"""
         if obj is None:
             return None
 
@@ -92,11 +87,13 @@ class AgentsExecutionActivityActionFailedPayload(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "actionId": obj.get("actionId"),
-            "actionName": obj.get("actionName"),
-            "activityType": obj.get("activityType"),
-            "duration": obj.get("duration"),
-            "message": obj.get("message")
+            "content": obj.get("content"),
+            "createdAt": obj.get("createdAt"),
+            "executionId": obj.get("executionId"),
+            "id": obj.get("id"),
+            "public": obj.get("public"),
+            "updatedAt": obj.get("updatedAt"),
+            "userId": obj.get("userId")
         })
         return _obj
 

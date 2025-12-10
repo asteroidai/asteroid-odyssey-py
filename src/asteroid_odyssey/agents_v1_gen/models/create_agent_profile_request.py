@@ -40,9 +40,8 @@ class CreateAgentProfileRequest(BaseModel):
     sticky_ip: StrictBool = Field(description="Whether the same IP address should be used for all executions of this profile")
     credentials: List[Credential] = Field(description="Optional list of credentials to create with the profile")
     cookies: List[Cookie] = Field(description="Optional list of cookies to create with the profile")
-    tracing_snapshots: Optional[StrictBool] = Field(default=True, description="Whether to enable tracing snapshots for the profile")
     extra_stealth: Optional[StrictBool] = Field(default=False, description="Whether to enable extra stealth for the profile")
-    __properties: ClassVar[List[str]] = ["name", "description", "organization_id", "proxy_cc", "proxy_type", "captcha_solver_active", "sticky_ip", "credentials", "cookies", "tracing_snapshots", "extra_stealth"]
+    __properties: ClassVar[List[str]] = ["name", "description", "organization_id", "proxy_cc", "proxy_type", "captcha_solver_active", "sticky_ip", "credentials", "cookies", "extra_stealth"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -118,7 +117,6 @@ class CreateAgentProfileRequest(BaseModel):
             "sticky_ip": obj.get("sticky_ip") if obj.get("sticky_ip") is not None else False,
             "credentials": [Credential.from_dict(_item) for _item in obj["credentials"]] if obj.get("credentials") is not None else None,
             "cookies": [Cookie.from_dict(_item) for _item in obj["cookies"]] if obj.get("cookies") is not None else None,
-            "tracing_snapshots": obj.get("tracing_snapshots") if obj.get("tracing_snapshots") is not None else True,
             "extra_stealth": obj.get("extra_stealth") if obj.get("extra_stealth") is not None else False
         })
         return _obj

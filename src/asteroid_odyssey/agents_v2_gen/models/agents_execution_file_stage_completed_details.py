@@ -19,23 +19,22 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictStr, field_validator
 from typing import Any, ClassVar, Dict, List
-from asteroid_odyssey.agents_v2_gen.models.agents_execution_terminal_payload import AgentsExecutionTerminalPayload
 from typing import Optional, Set
 from typing_extensions import Self
 
-class ActivityPayloadUnionTerminal(BaseModel):
+class AgentsExecutionFileStageCompletedDetails(BaseModel):
     """
-    ActivityPayloadUnionTerminal
+    AgentsExecutionFileStageCompletedDetails
     """ # noqa: E501
-    activity_type: StrictStr = Field(alias="activityType")
-    data: AgentsExecutionTerminalPayload
-    __properties: ClassVar[List[str]] = ["activityType", "data"]
+    action_name: StrictStr = Field(alias="actionName")
+    file_names: List[StrictStr] = Field(alias="fileNames")
+    __properties: ClassVar[List[str]] = ["actionName", "fileNames"]
 
-    @field_validator('activity_type')
-    def activity_type_validate_enum(cls, value):
+    @field_validator('action_name')
+    def action_name_validate_enum(cls, value):
         """Validates the enum"""
-        if value not in set(['terminal']):
-            raise ValueError("must be one of enum values ('terminal')")
+        if value not in set(['file_stage']):
+            raise ValueError("must be one of enum values ('file_stage')")
         return value
 
     model_config = ConfigDict(
@@ -56,7 +55,7 @@ class ActivityPayloadUnionTerminal(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of ActivityPayloadUnionTerminal from a JSON string"""
+        """Create an instance of AgentsExecutionFileStageCompletedDetails from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -77,14 +76,11 @@ class ActivityPayloadUnionTerminal(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of data
-        if self.data:
-            _dict['data'] = self.data.to_dict()
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of ActivityPayloadUnionTerminal from a dict"""
+        """Create an instance of AgentsExecutionFileStageCompletedDetails from a dict"""
         if obj is None:
             return None
 
@@ -92,8 +88,8 @@ class ActivityPayloadUnionTerminal(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "activityType": obj.get("activityType"),
-            "data": AgentsExecutionTerminalPayload.from_dict(obj["data"]) if obj.get("data") is not None else None
+            "actionName": obj.get("actionName"),
+            "fileNames": obj.get("fileNames")
         })
         return _obj
 

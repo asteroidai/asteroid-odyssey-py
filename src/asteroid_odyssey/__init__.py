@@ -19,7 +19,8 @@ from .client import (
     AsteroidAPIError,
     ExecutionError,
     TimeoutError,
-    AgentInteractionResult
+    AgentInteractionResult,
+    TempFile,
 )
 from .agents_v1_gen import ExecutionResult
 
@@ -45,5 +46,6 @@ __all__ = [
     'ExecutionError',
     'TimeoutError',
     'AgentInteractionResult',
-    'ExecutionResult'
+    'ExecutionResult',
+    'TempFile',
 ]

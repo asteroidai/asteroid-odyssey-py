@@ -17,7 +17,7 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, Field, StrictInt
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr, field_validator
 from typing import Any, ClassVar, Dict, List
 from typing import Optional, Set
 from typing_extensions import Self
@@ -26,8 +26,16 @@ class AgentsExecutionActivityStepStartedPayload(BaseModel):
     """
     AgentsExecutionActivityStepStartedPayload
     """ # noqa: E501
+    activity_type: StrictStr = Field(alias="activityType")
     step_number: StrictInt = Field(alias="stepNumber")
-    __properties: ClassVar[List[str]] = ["stepNumber"]
+    __properties: ClassVar[List[str]] = ["activityType", "stepNumber"]
+
+    @field_validator('activity_type')
+    def activity_type_validate_enum(cls, value):
+        """Validates the enum"""
+        if value not in set(['step_started']):
+            raise ValueError("must be one of enum values ('step_started')")
+        return value
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -80,6 +88,7 @@ class AgentsExecutionActivityStepStartedPayload(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
+            "activityType": obj.get("activityType"),
             "stepNumber": obj.get("stepNumber")
         })
         return _obj
