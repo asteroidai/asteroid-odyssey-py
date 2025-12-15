@@ -19,12 +19,7 @@ from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from .agents_v1_gen import (
     Configuration as AgentsV1Configuration,
     ApiClient as AgentsV1ApiClient,
-    APIApi as AgentsV1APIApi,
-    ExecutionApi as AgentsV1ExecutionApi,
     AgentProfileApi as AgentsV1AgentProfileApi,
-    ExecutionStatusResponse,
-    ExecutionResult,
-    Status,
     CreateAgentProfileRequest,
     UpdateAgentProfileRequest,
     DeleteAgentProfile200Response,
@@ -49,6 +44,7 @@ from .agents_v2_gen import (
     AgentsExecutionSortField as ExecutionSortField,
     AgentsExecutionStatus as ExecutionStatus,
     AgentsExecutionListItem as ExecutionListItem,
+    AgentsExecutionExecutionResult as ExecutionResult,
     ExecutionsList200Response,
     CommonSortDirection as SortDirection,
 )
@@ -131,7 +127,7 @@ class AsteroidClient:
 
         Args:
             api_key: Your API key for authentication
-            base_url: Optional base URL (defaults to https://odyssey.asteroid.ai/api/v1)
+            base_url: Optional base URL (defaults to https://odyssey.asteroid.ai)
 
         Example:
             client = AsteroidClient('your-api-key')
@@ -139,23 +135,22 @@ class AsteroidClient:
         if api_key is None:
             raise TypeError("API key cannot be None")
 
-        # Configure the V1 API client (used for status, results, profiles, etc.)
-        config = AgentsV1Configuration(
-            host=base_url or "https://odyssey.asteroid.ai/api/v1",
+        base = base_url or "https://odyssey.asteroid.ai"
+
+        # Configure the V1 API client (used for agent profiles and credentials)
+        v1_config = AgentsV1Configuration(
+            host=f"{base}/api/v1",
             api_key={'ApiKeyAuth': api_key}
         )
-
-        self.api_client = AgentsV1ApiClient(config)
-        self.api_api = AgentsV1APIApi(self.api_client)
-        self.execution_api = AgentsV1ExecutionApi(self.api_client)
+        self.api_client = AgentsV1ApiClient(v1_config)
         self.agent_profile_api = AgentsV1AgentProfileApi(self.api_client)
 
-        # Configure the V2 API client
-        self.agents_v2_config = AgentsV2Configuration(
-            host=base_url or "https://odyssey.asteroid.ai/agents/v2",
+        # Configure the V2 API client (used for agents, executions, files)
+        v2_config = AgentsV2Configuration(
+            host=f"{base}/agents/v2",
             api_key={'ApiKeyAuth': api_key}
         )
-        self.agents_v2_api_client = AgentsV2ApiClient(self.agents_v2_config)
+        self.agents_v2_api_client = AgentsV2ApiClient(v2_config)
         self.agents_v2_agents_api = AgentsV2AgentsApi(self.agents_v2_api_client)
         self.agents_v2_execution_api = AgentsV2ExecutionApi(self.agents_v2_api_client)
         self.agents_v2_files_api = AgentsV2FilesApi(self.agents_v2_api_client)
@@ -205,65 +200,41 @@ class AsteroidClient:
         except ApiException as e:
             raise AsteroidAPIError(f"Failed to execute agent: {e}") from e
 
-    # --- V1 ---
-
-    def get_execution_status(self, execution_id: str) -> ExecutionStatusResponse:
+    def get_execution(self, execution_id: str) -> ExecutionListItem:
         """
-        Get the current status for an execution.
+        Get a single execution by ID with all details.
+
+        This method returns comprehensive execution information including status,
+        result, browser recording URL, and other metadata.
 
         Args:
             execution_id: The execution identifier
 
         Returns:
-            The execution status details
+            The execution details including:
+            - status: Current execution status
+            - execution_result: Result with outcome and reasoning (if terminal)
+            - browser_recording_url: Recording URL (if browser session was used)
+            - browser_live_view_url: Live view URL (if execution is running)
+            - agent_id, agent_name, agent_version: Agent information
+            - created_at, terminal_at, duration: Timing information
+            - metadata, comments, human_labels: Additional data
 
         Raises:
-            AsteroidAPIError: If the status request fails
+            AsteroidAPIError: If the request fails
 
         Example:
-            status = client.get_execution_status(execution_id)
-            print(status.status)
+            execution = client.get_execution(execution_id)
+            print(f"Status: {execution.status}")
+            if execution.execution_result:
+                print(f"Outcome: {execution.execution_result.outcome}")
+            if execution.browser_recording_url:
+                print(f"Recording: {execution.browser_recording_url}")
         """
         try:
-            return self.execution_api.get_execution_status(execution_id)
+            return self.agents_v2_execution_api.execution_get(execution_id)
         except ApiException as e:
-            raise AsteroidAPIError(f"Failed to get execution status: {e}") from e
-
-    def get_execution_result(self, execution_id: str) -> ExecutionResult:
-        """
-        Get the final result of an execution.
-
-        Args:
-            execution_id: The execution identifier
-
-        Returns:
-            The execution result object
-
-        Raises:
-            AsteroidAPIError: If the result request fails or execution failed
-
-        Example:
-            result = client.get_execution_result(execution_id)
-            print(result.outcome, result.reasoning)
-        """
-        try:
-            response = self.execution_api.get_execution_result(execution_id)
-
-            if response.error:
-                raise AsteroidAPIError(response.error)
-
-            # Handle case where execution_result might be None or have invalid data
-            if response.execution_result is None:
-                raise AsteroidAPIError("Execution result is not available yet")
-
-            return response.execution_result
-        except ApiException as e:
-            raise AsteroidAPIError(f"Failed to get execution result: {e}") from e
-        except Exception as e:
-            # Handle validation errors from ExecutionResult model
-            if "must be one of enum values" in str(e):
-                raise AsteroidAPIError("Execution result is not available yet - execution may still be running") from e
-            raise e
+            raise AsteroidAPIError(f"Failed to get execution: {e}") from e
 
     def wait_for_execution_result(
         self,
@@ -274,7 +245,7 @@ class AsteroidClient:
         """
         Wait for an execution to reach a terminal state and return the result.
 
-        Continuously polls the execution status until it's either "completed",
+        Continuously polls the execution until it's either "completed",
         "cancelled", or "failed".
 
         Args:
@@ -306,31 +277,21 @@ class AsteroidClient:
             if elapsed_time >= timeout:
                 raise TimeoutError(f"Execution {execution_id} timed out after {timeout}s")
 
-            status_response = self.get_execution_status(execution_id)
-            current_status = status_response.status
+            execution = self.get_execution(execution_id)
+            current_status = execution.status
 
-            if current_status == Status.COMPLETED:
-                try:
-                    return self.get_execution_result(execution_id)
-                except Exception as e:
-                    if "not available yet" in str(e):
-                        # Execution completed but result not ready yet, wait a bit more
-                        time.sleep(interval)
-                        continue
-                    raise e
-            elif current_status in [Status.FAILED, Status.CANCELLED]:
-                # Get the execution result to provide outcome and reasoning
-                try:
-                    execution_result = self.get_execution_result(execution_id)
-                    reason = f" - {status_response.reason}" if status_response.reason else ""
-                    raise ExecutionError(
-                        f"Execution {execution_id} ended with status: {current_status.value}{reason}",
-                        execution_result
-                    )
-                except Exception as e:
-                    # If we can't get the execution result, fall back to the original behavior
-                    reason = f" - {status_response.reason}" if status_response.reason else ""
-                    raise ExecutionError(f"Execution {execution_id} ended with status: {current_status.value}{reason}") from e
+            if current_status == ExecutionStatus.COMPLETED:
+                if execution.execution_result:
+                    return execution.execution_result
+                # Execution completed but result not ready yet, wait a bit more
+                time.sleep(interval)
+                continue
+
+            elif current_status in [ExecutionStatus.FAILED, ExecutionStatus.CANCELLED]:
+                raise ExecutionError(
+                    f"Execution {execution_id} ended with status: {current_status.value}",
+                    execution.execution_result
+                )
 
             # Wait for the specified interval before polling again
             time.sleep(interval)
@@ -411,28 +372,7 @@ class AsteroidClient:
         except ApiException as e:
             raise AsteroidAPIError(f"Failed to upload execution files: {e}") from e
 
-    def get_browser_session_recording(self, execution_id: str) -> str:
-        """
-        Get the browser session recording URL for a completed execution.
-
-        Args:
-            execution_id: The execution identifier
-
-        Returns:
-            The URL of the browser session recording
-
-        Raises:
-            Exception: If the recording request fails
-
-        Example:
-            recording_url = client.get_browser_session_recording(execution_id)
-            print(f"Recording available at: {recording_url}")
-        """
-        try:
-            response = self.execution_api.get_browser_session_recording(execution_id)
-            return response.recording_url
-        except ApiException as e:
-            raise AsteroidAPIError(f"Failed to get browser session recording: {e}") from e
+    # --- V1 (Agent Profiles) ---
 
     def get_agent_profiles(self, organization_id: str) -> List[AgentProfile]:
         """
@@ -686,47 +626,34 @@ class AsteroidClient:
             if elapsed_time >= timeout:
                 raise TimeoutError(f"Wait for interaction on execution {execution_id} timed out after {timeout}s")
 
-            # Get current status
-            status_response = self.get_execution_status(execution_id)
-            current_status = status_response.status
+            # Get current execution state
+            execution = self.get_execution(execution_id)
+            current_status = execution.status
             status_str = current_status.value.lower()
 
             # Handle terminal states
-            if current_status == Status.COMPLETED:
-                try:
-                    execution_result = self.get_execution_result(execution_id)
+            if current_status == ExecutionStatus.COMPLETED:
+                if execution.execution_result:
                     return AgentInteractionResult(
                         is_terminal=True,
                         status=status_str,
                         agent_message=None,
-                        execution_result=execution_result
+                        execution_result=execution.execution_result
                     )
-                except AsteroidAPIError as e:
-                    if "not available yet" in str(e):
-                        time.sleep(poll_interval)
-                        continue
-                    raise e
+                # Execution completed but result not ready yet, wait a bit more
+                time.sleep(poll_interval)
+                continue
 
-            elif current_status in [Status.FAILED, Status.CANCELLED]:
-                try:
-                    execution_result = self.get_execution_result(execution_id)
-                    return AgentInteractionResult(
-                        is_terminal=True,
-                        status=status_str,
-                        agent_message=None,
-                        execution_result=execution_result
-                    )
-                except AsteroidAPIError as e:
-                    # If we can't get the execution result, still return terminal state
-                    return AgentInteractionResult(
-                        is_terminal=True,
-                        status=status_str,
-                        agent_message=None,
-                        execution_result=None
-                    )
+            elif current_status in [ExecutionStatus.FAILED, ExecutionStatus.CANCELLED]:
+                return AgentInteractionResult(
+                    is_terminal=True,
+                    status=status_str,
+                    agent_message=None,
+                    execution_result=execution.execution_result
+                )
 
             # Handle agent interaction request
-            elif current_status == Status.PAUSED_BY_AGENT:
+            elif current_status == ExecutionStatus.PAUSED_BY_AGENT:
                 # Get the agent's message/request
                 agent_message = self._extract_agent_request_message(execution_id)
                 return AgentInteractionResult(
@@ -1191,47 +1118,39 @@ def execute_agent(
         version,
     )
 
-# --- V1 ---
-
-
-
-def get_execution_status(client: AsteroidClient, execution_id: str) -> ExecutionStatusResponse:
+def get_execution(client: AsteroidClient, execution_id: str) -> ExecutionListItem:
     """
-    Get the current status for an execution.
+    Get a single execution by ID with all details.
+
+    This function returns comprehensive execution information including status,
+    result, browser recording URL, and other metadata.
 
     Args:
         client: The AsteroidClient instance
         execution_id: The execution identifier
 
     Returns:
-        The execution status details
-
-    Example:
-        status = get_execution_status(client, execution_id)
-        print(status.status)
-    """
-    return client.get_execution_status(execution_id)
-
-
-def get_execution_result(client: AsteroidClient, execution_id: str) -> ExecutionResult:
-    """
-    Get the final result of an execution.
-
-    Args:
-        client: The AsteroidClient instance
-        execution_id: The execution identifier
-
-    Returns:
-        The execution result object
+        The execution details including:
+        - status: Current execution status
+        - execution_result: Result with outcome and reasoning (if terminal)
+        - browser_recording_url: Recording URL (if browser session was used)
+        - browser_live_view_url: Live view URL (if execution is running)
+        - agent_id, agent_name, agent_version: Agent information
+        - created_at, terminal_at, duration: Timing information
+        - metadata, comments, human_labels: Additional data
 
     Raises:
-        Exception: If the result is not available yet or execution failed
+        AsteroidAPIError: If the request fails
 
     Example:
-        result = get_execution_result(client, execution_id)
-        print(result.outcome, result.reasoning)
+        execution = get_execution(client, execution_id)
+        print(f"Status: {execution.status}")
+        if execution.execution_result:
+            print(f"Outcome: {execution.execution_result.outcome}")
+        if execution.browser_recording_url:
+            print(f"Recording: {execution.browser_recording_url}")
     """
-    return client.get_execution_result(execution_id)
+    return client.get_execution(execution_id)
 
 
 def wait_for_execution_result(
@@ -1341,22 +1260,7 @@ def stage_temp_files(
     return client.stage_temp_files(organization_id, files, default_filename)
 
 
-def get_browser_session_recording(client: AsteroidClient, execution_id: str) -> str:
-    """
-    Get the browser session recording URL for a completed execution.
-
-    Args:
-        client: The AsteroidClient instance
-        execution_id: The execution identifier
-
-    Returns:
-        The URL of the browser session recording
-
-    Example:
-        recording_url = get_browser_session_recording(client, execution_id)
-        print(f"Recording available at: {recording_url}")
-    """
-    return client.get_browser_session_recording(execution_id)
+# --- V1 (Agent Profiles) ---
 
 def get_agent_profiles(client: AsteroidClient, organization_id: Optional[str] = None) -> List[AgentProfile]:
     """
@@ -1687,14 +1591,11 @@ __all__ = [
     'create_client',
     # Agent Execution (V2)
     'execute_agent',
+    'get_execution',
     'get_executions',
-    # Execution Status & Results (V1)
-    'get_execution_status',
-    'get_execution_result',
     'wait_for_execution_result',
     'upload_execution_files',
     'stage_temp_files',
-    'get_browser_session_recording',
     # Agent Profiles (V1)
     'get_agent_profiles',
     'get_agent_profile',
@@ -1720,6 +1621,7 @@ __all__ = [
     'TempFilesResponse',
     'ExecuteAgentRequest',
     'ExecutionListItem',
+    'ExecutionResult',
     'ExecutionsList200Response',
     'ExecutionStatus',
     'ExecutionSortField',
