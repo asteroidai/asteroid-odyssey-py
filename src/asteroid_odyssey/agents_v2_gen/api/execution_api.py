@@ -110,8 +110,10 @@ class ExecutionApi:
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "List[AgentsExecutionActivity]",
             '400': "CommonBadRequestErrorBody",
+            '401': "CommonUnauthorizedErrorBody",
             '403': "CommonForbiddenErrorBody",
             '404': "CommonNotFoundErrorBody",
+            '500': "CommonInternalServerErrorBody",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -188,8 +190,10 @@ class ExecutionApi:
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "List[AgentsExecutionActivity]",
             '400': "CommonBadRequestErrorBody",
+            '401': "CommonUnauthorizedErrorBody",
             '403': "CommonForbiddenErrorBody",
             '404': "CommonNotFoundErrorBody",
+            '500': "CommonInternalServerErrorBody",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -266,8 +270,10 @@ class ExecutionApi:
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "List[AgentsExecutionActivity]",
             '400': "CommonBadRequestErrorBody",
+            '401': "CommonUnauthorizedErrorBody",
             '403': "CommonForbiddenErrorBody",
             '404': "CommonNotFoundErrorBody",
+            '500': "CommonInternalServerErrorBody",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -406,8 +412,10 @@ class ExecutionApi:
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "AgentsExecutionListItem",
             '400': "CommonBadRequestErrorBody",
+            '401': "CommonUnauthorizedErrorBody",
             '403': "CommonForbiddenErrorBody",
             '404': "CommonNotFoundErrorBody",
+            '500': "CommonInternalServerErrorBody",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -476,8 +484,10 @@ class ExecutionApi:
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "AgentsExecutionListItem",
             '400': "CommonBadRequestErrorBody",
+            '401': "CommonUnauthorizedErrorBody",
             '403': "CommonForbiddenErrorBody",
             '404': "CommonNotFoundErrorBody",
+            '500': "CommonInternalServerErrorBody",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -546,8 +556,10 @@ class ExecutionApi:
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "AgentsExecutionListItem",
             '400': "CommonBadRequestErrorBody",
+            '401': "CommonUnauthorizedErrorBody",
             '403': "CommonForbiddenErrorBody",
             '404': "CommonNotFoundErrorBody",
+            '500': "CommonInternalServerErrorBody",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -680,8 +692,10 @@ class ExecutionApi:
         _response_types_map: Dict[str, Optional[str]] = {
             '201': "str",
             '400': "CommonBadRequestErrorBody",
+            '401': "CommonUnauthorizedErrorBody",
             '403': "CommonForbiddenErrorBody",
             '404': "CommonNotFoundErrorBody",
+            '500': "CommonInternalServerErrorBody",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -754,8 +768,10 @@ class ExecutionApi:
         _response_types_map: Dict[str, Optional[str]] = {
             '201': "str",
             '400': "CommonBadRequestErrorBody",
+            '401': "CommonUnauthorizedErrorBody",
             '403': "CommonForbiddenErrorBody",
             '404': "CommonNotFoundErrorBody",
+            '500': "CommonInternalServerErrorBody",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -828,8 +844,10 @@ class ExecutionApi:
         _response_types_map: Dict[str, Optional[str]] = {
             '201': "str",
             '400': "CommonBadRequestErrorBody",
+            '401': "CommonUnauthorizedErrorBody",
             '403': "CommonForbiddenErrorBody",
             '404': "CommonNotFoundErrorBody",
+            '500': "CommonInternalServerErrorBody",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -1031,8 +1049,10 @@ class ExecutionApi:
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ExecutionsList200Response",
             '400': "CommonBadRequestErrorBody",
+            '401': "CommonUnauthorizedErrorBody",
             '403': "CommonForbiddenErrorBody",
             '404': "CommonNotFoundErrorBody",
+            '500': "CommonInternalServerErrorBody",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -1157,8 +1177,10 @@ class ExecutionApi:
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ExecutionsList200Response",
             '400': "CommonBadRequestErrorBody",
+            '401': "CommonUnauthorizedErrorBody",
             '403': "CommonForbiddenErrorBody",
             '404': "CommonNotFoundErrorBody",
+            '500': "CommonInternalServerErrorBody",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -1283,8 +1305,10 @@ class ExecutionApi:
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ExecutionsList200Response",
             '400': "CommonBadRequestErrorBody",
+            '401': "CommonUnauthorizedErrorBody",
             '403': "CommonForbiddenErrorBody",
             '404': "CommonNotFoundErrorBody",
+            '500': "CommonInternalServerErrorBody",
         }
         response_data = self.api_client.call_api(
             *_param,
