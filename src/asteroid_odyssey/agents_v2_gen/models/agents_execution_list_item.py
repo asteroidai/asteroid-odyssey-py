@@ -36,7 +36,8 @@ class AgentsExecutionListItem(BaseModel):
     agent_profile_name: Optional[StrictStr] = Field(default=None, description="The name of the agent profile used for this execution (if any)", alias="agentProfileName")
     agent_version: StrictInt = Field(description="The version of the agent that was executed", alias="agentVersion")
     agent_version_dirty: StrictBool = Field(description="Whether the agent version was modified from the original", alias="agentVersionDirty")
-    browser_recording_url: Optional[StrictStr] = Field(default=None, description="Browser recording URL (if a browser session was used)", alias="browserRecordingUrl")
+    browser_live_view_url: Optional[StrictStr] = Field(default=None, description="Browser live view URL for debugging (if a browser session is active and execution is running)", alias="browserLiveViewUrl")
+    browser_recording_url: Optional[StrictStr] = Field(default=None, description="Browser recording URL (if a browser session was used and execution is terminal)", alias="browserRecordingUrl")
     comments: List[AgentsExecutionComment] = Field(description="Comments on this execution")
     created_at: datetime = Field(description="When the execution was created", alias="createdAt")
     duration: Optional[Union[StrictFloat, StrictInt]] = Field(default=None, description="Execution duration in seconds (only present for terminal executions)")
@@ -48,7 +49,7 @@ class AgentsExecutionListItem(BaseModel):
     status: AgentsExecutionStatus = Field(description="The current status of the execution")
     terminal_at: Optional[datetime] = Field(default=None, description="When the execution reached a terminal state (if applicable)", alias="terminalAt")
     workflow_id: StrictStr = Field(description="The ID of the workflow that was executed", alias="workflowId")
-    __properties: ClassVar[List[str]] = ["agentId", "agentName", "agentProfileName", "agentVersion", "agentVersionDirty", "browserRecordingUrl", "comments", "createdAt", "duration", "executionResult", "humanLabels", "id", "metadata", "organizationId", "status", "terminalAt", "workflowId"]
+    __properties: ClassVar[List[str]] = ["agentId", "agentName", "agentProfileName", "agentVersion", "agentVersionDirty", "browserLiveViewUrl", "browserRecordingUrl", "comments", "createdAt", "duration", "executionResult", "humanLabels", "id", "metadata", "organizationId", "status", "terminalAt", "workflowId"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -123,6 +124,7 @@ class AgentsExecutionListItem(BaseModel):
             "agentProfileName": obj.get("agentProfileName"),
             "agentVersion": obj.get("agentVersion"),
             "agentVersionDirty": obj.get("agentVersionDirty"),
+            "browserLiveViewUrl": obj.get("browserLiveViewUrl"),
             "browserRecordingUrl": obj.get("browserRecordingUrl"),
             "comments": [AgentsExecutionComment.from_dict(_item) for _item in obj["comments"]] if obj.get("comments") is not None else None,
             "createdAt": obj.get("createdAt"),

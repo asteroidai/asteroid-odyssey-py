@@ -25,7 +25,6 @@ from .agents_v1_gen import (
     ExecutionStatusResponse,
     ExecutionResult,
     Status,
-    StructuredAgentExecutionRequest,
     CreateAgentProfileRequest,
     UpdateAgentProfileRequest,
     DeleteAgentProfile200Response,
@@ -44,9 +43,14 @@ from .agents_v2_gen import (
     AgentsExecutionActivity as ExecutionActivity,
     AgentsExecutionUserMessagesAddTextBody as ExecutionUserMessagesAddTextBody,
     AgentsFilesFile as File,
-    AgentsAgentExecuteAgentRequest as V2ExecuteAgentRequest,
+    AgentsAgentExecuteAgentRequest as ExecuteAgentRequest,
     AgentsFilesTempFile as TempFile,
     AgentsFilesTempFilesResponse as TempFilesResponse,
+    AgentsExecutionSortField as ExecutionSortField,
+    AgentsExecutionStatus as ExecutionStatus,
+    AgentsExecutionListItem as ExecutionListItem,
+    ExecutionsList200Response,
+    CommonSortDirection as SortDirection,
 )
 
 
@@ -156,10 +160,12 @@ class AsteroidClient:
         self.agents_v2_execution_api = AgentsV2ExecutionApi(self.agents_v2_api_client)
         self.agents_v2_files_api = AgentsV2FilesApi(self.agents_v2_api_client)
 
+    # --- V2 ---
+
     def execute_agent(
         self,
         agent_id: str,
-        execution_data: Optional[Dict[str, Any]] = None,
+        dynamic_data: Optional[Dict[str, Any]] = None,
         agent_profile_id: Optional[str] = None,
         metadata: Optional[Dict[str, Any]] = None,
         temp_files: Optional[List[TempFile]] = None,
@@ -170,10 +176,10 @@ class AsteroidClient:
 
         Args:
             agent_id: The ID of the agent to execute
-            execution_data: Dynamic data to be merged into the placeholders defined in prompts
+            dynamic_data: Dynamic data to be merged into the placeholders defined in prompts
             agent_profile_id: Optional ID of the agent profile to use
             metadata: Optional metadata key-value pairs for organizing and filtering executions
-            temp_files: Optional list of temporary files to attach (must be pre-uploaded using stage file endpoint)
+            temp_files: Optional list of temporary files to attach (must be pre-uploaded using stage_temp_files)
             version: Optional version of the agent to execute. If not provided, the latest version will be used.
 
         Returns:
@@ -186,8 +192,8 @@ class AsteroidClient:
             execution_id = client.execute_agent('my-agent-id', {'input': 'some dynamic value'})
             execution_id = client.execute_agent('my-agent-id', {'input': 'value'}, version=3)
         """
-        req = V2ExecuteAgentRequest(
-            dynamic_data=execution_data,
+        req = ExecuteAgentRequest(
+            dynamic_data=dynamic_data,
             agent_profile_id=agent_profile_id,
             metadata=metadata,
             temp_files=temp_files,
@@ -794,8 +800,6 @@ class AsteroidClient:
             pass
         return False
 
-    # --- V2 ---
-
     def get_agents(self, org_id: str, page: int = 1, page_size: int = 100) -> List[Agent]:
         """
         Get a paginated list of agents for an organization.
@@ -812,8 +816,101 @@ class AsteroidClient:
             for agent in agents:
                 print(f"Agent: {agent.name}")
         """
-        response = self.agents_v2_execution_api.agent_list(organization_id=org_id, page=page, page_size=page_size)
+        response = self.agents_v2_agents_api.agent_list(organization_id=org_id, page=page, page_size=page_size)
         return response.items
+
+    def get_executions(
+        self,
+        organization_id: str,
+        page: int = 1,
+        page_size: int = 20,
+        execution_id: Optional[str] = None,
+        agent_id: Optional[str] = None,
+        status: Optional[List[str]] = None,
+        agent_version: Optional[int] = None,
+        created_after: Optional[str] = None,
+        created_before: Optional[str] = None,
+        human_labels: Optional[List[str]] = None,
+        outcome_label: Optional[str] = None,
+        metadata_key: Optional[str] = None,
+        metadata_value: Optional[str] = None,
+        sort_field: Optional[str] = None,
+        sort_direction: Optional[str] = None,
+    ) -> ExecutionsList200Response:
+        """
+        Get a paginated list of executions with optional filtering.
+
+        Args:
+            organization_id: The organization identifier (required)
+            page: The page number (default: 1)
+            page_size: The page size (default: 20)
+            execution_id: Search by execution ID (partial, case-insensitive match)
+            agent_id: Filter by agent ID
+            status: Filter by execution status (can specify multiple)
+            agent_version: Filter by agent version
+            created_after: Filter executions created after this timestamp (ISO 8601)
+            created_before: Filter executions created before this timestamp (ISO 8601)
+            human_labels: Filter by human labels (can specify multiple label IDs)
+            outcome_label: Filter by execution result outcome (partial, case-insensitive match)
+            metadata_key: Filter by metadata key - must be used together with metadata_value
+            metadata_value: Filter by metadata value - must be used together with metadata_key
+            sort_field: Field to sort by (e.g., 'created_at')
+            sort_direction: Sort direction ('asc' or 'desc')
+
+        Returns:
+            Paginated execution list with metadata
+
+        Raises:
+            AsteroidAPIError: If the executions request fails
+
+        Example:
+            # Get all executions for an organization
+            result = client.get_executions(organization_id='org_123', page=1, page_size=20)
+
+            # Filter by agent and status
+            result = client.get_executions(
+                organization_id='org_123',
+                agent_id='agent_456',
+                status=['completed', 'failed'],
+                sort_field='created_at',
+                sort_direction='desc'
+            )
+        """
+        from datetime import datetime as dt
+
+        # Convert status strings to enum if provided
+        status_enums = None
+        if status:
+            status_enums = [ExecutionStatus(s) for s in status]
+
+        # Convert sort_field and sort_direction to enums if provided
+        sort_field_enum = ExecutionSortField(sort_field) if sort_field else None
+        sort_direction_enum = SortDirection(sort_direction) if sort_direction else None
+
+        # Parse datetime strings
+        created_after_dt = dt.fromisoformat(created_after.replace('Z', '+00:00')) if created_after else None
+        created_before_dt = dt.fromisoformat(created_before.replace('Z', '+00:00')) if created_before else None
+
+        try:
+            return self.agents_v2_execution_api.executions_list(
+                page_size=page_size,
+                page=page,
+                organization_id=organization_id,
+                execution_id=execution_id,
+                agent_id=agent_id,
+                status=status_enums,
+                agent_version=agent_version,
+                created_after=created_after_dt,
+                created_before=created_before_dt,
+                human_labels=human_labels,
+                outcome_label=outcome_label,
+                metadata_key=metadata_key,
+                metadata_value=metadata_value,
+                sort_field=sort_field_enum,
+                sort_direction=sort_direction_enum,
+            )
+        except ApiException as e:
+            raise AsteroidAPIError(f"Failed to get executions: {e}") from e
 
     def get_last_n_execution_activities(self, execution_id: str, n: int) -> List[ExecutionActivity]:
         """
@@ -1055,10 +1152,12 @@ def create_client(api_key: str, base_url: Optional[str] = None) -> AsteroidClien
     """
     return AsteroidClient(api_key, base_url)
 
+# --- V2 ---
+
 def execute_agent(
     client: AsteroidClient,
     agent_id: str,
-    execution_data: Optional[Dict[str, Any]] = None,
+    dynamic_data: Optional[Dict[str, Any]] = None,
     agent_profile_id: Optional[str] = None,
     metadata: Optional[Dict[str, Any]] = None,
     temp_files: Optional[List[TempFile]] = None,
@@ -1070,10 +1169,10 @@ def execute_agent(
     Args:
         client: The AsteroidClient instance
         agent_id: The ID of the agent to execute
-        execution_data: Dynamic data to be merged into the placeholders defined in prompts
+        dynamic_data: Dynamic data to be merged into the placeholders defined in prompts
         agent_profile_id: Optional ID of the agent profile to use
         metadata: Optional metadata key-value pairs for organizing and filtering executions
-        temp_files: Optional list of temporary files to attach (must be pre-uploaded using stage file endpoint)
+        temp_files: Optional list of temporary files to attach (must be pre-uploaded using stage_temp_files)
         version: Optional version of the agent to execute. If not provided, the latest version will be used.
 
     Returns:
@@ -1085,7 +1184,7 @@ def execute_agent(
     """
     return client.execute_agent(
         agent_id,
-        execution_data,
+        dynamic_data,
         agent_profile_id,
         metadata,
         temp_files,
@@ -1380,8 +1479,71 @@ def get_agents(client: AsteroidClient, org_id: str, page: int = 1, page_size: in
         for agent in agents:
             print(f"Agent: {agent.name}")
     """
-    response = client.get_agents(org_id, page, page_size)
-    return response.items
+    return client.get_agents(org_id, page, page_size)
+
+def get_executions(
+    client: AsteroidClient,
+    organization_id: str,
+    page: int = 1,
+    page_size: int = 20,
+    execution_id: Optional[str] = None,
+    agent_id: Optional[str] = None,
+    status: Optional[List[str]] = None,
+    agent_version: Optional[int] = None,
+    created_after: Optional[str] = None,
+    created_before: Optional[str] = None,
+    human_labels: Optional[List[str]] = None,
+    outcome_label: Optional[str] = None,
+    metadata_key: Optional[str] = None,
+    metadata_value: Optional[str] = None,
+    sort_field: Optional[str] = None,
+    sort_direction: Optional[str] = None,
+) -> ExecutionsList200Response:
+    """
+    Get a paginated list of executions with optional filtering.
+
+    Args:
+        client: The AsteroidClient instance
+        organization_id: The organization identifier (required)
+        page: The page number (default: 1)
+        page_size: The page size (default: 20)
+        execution_id: Search by execution ID (partial, case-insensitive match)
+        agent_id: Filter by agent ID
+        status: Filter by execution status (can specify multiple)
+        agent_version: Filter by agent version
+        created_after: Filter executions created after this timestamp (ISO 8601)
+        created_before: Filter executions created before this timestamp (ISO 8601)
+        human_labels: Filter by human labels (can specify multiple label IDs)
+        outcome_label: Filter by execution result outcome (partial, case-insensitive match)
+        metadata_key: Filter by metadata key - must be used together with metadata_value
+        metadata_value: Filter by metadata value - must be used together with metadata_key
+        sort_field: Field to sort by (e.g., 'created_at')
+        sort_direction: Sort direction ('asc' or 'desc')
+
+    Returns:
+        Paginated execution list with metadata
+
+    Example:
+        result = get_executions(client, organization_id='org_123', page=1, page_size=20)
+    """
+    return client.get_executions(
+        organization_id=organization_id,
+        page=page,
+        page_size=page_size,
+        execution_id=execution_id,
+        agent_id=agent_id,
+        status=status,
+        agent_version=agent_version,
+        created_after=created_after,
+        created_before=created_before,
+        human_labels=human_labels,
+        outcome_label=outcome_label,
+        metadata_key=metadata_key,
+        metadata_value=metadata_value,
+        sort_field=sort_field,
+        sort_direction=sort_direction,
+    )
+
 def get_last_n_execution_activities(client: AsteroidClient, execution_id: str, n: int) -> List[ExecutionActivity]:
     """
     Get the last N execution activities for a given execution ID, sorted by their timestamp in descending order.
@@ -1520,31 +1682,46 @@ def wait_for_agent_interaction(
 
 # Re-export common types for convenience
 __all__ = [
+    # Client
     'AsteroidClient',
     'create_client',
+    # Agent Execution (V2)
     'execute_agent',
+    'get_executions',
+    # Execution Status & Results (V1)
     'get_execution_status',
     'get_execution_result',
     'wait_for_execution_result',
     'upload_execution_files',
     'stage_temp_files',
     'get_browser_session_recording',
+    # Agent Profiles (V1)
     'get_agent_profiles',
     'get_agent_profile',
     'create_agent_profile',
     'update_agent_profile',
     'delete_agent_profile',
+    'get_credentials_public_key',
+    # Agents (V2)
     'get_agents',
+    # Execution Activities (V2)
     'get_last_n_execution_activities',
     'add_message_to_execution',
     'get_execution_files',
     'download_execution_file',
     'wait_for_agent_interaction',
-    'get_credentials_public_key',
+    # Exceptions
     'AsteroidAPIError',
     'ExecutionError',
     'TimeoutError',
     'AgentInteractionResult',
+    # Types
     'TempFile',
     'TempFilesResponse',
+    'ExecuteAgentRequest',
+    'ExecutionListItem',
+    'ExecutionsList200Response',
+    'ExecutionStatus',
+    'ExecutionSortField',
+    'SortDirection',
 ]
